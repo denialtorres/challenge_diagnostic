@@ -28,7 +28,7 @@ RSpec.describe "API V1 Sessions", type: :request do
         password: "invalid"
       }
 
-      expect([401, 403]).to include(response.status)
+      expect([ 401, 403 ]).to include(response.status)
       expect(response.content_type).to match(a_string_including("application/json"))
 
       json_response = JSON.parse(response.body)
@@ -60,7 +60,7 @@ RSpec.describe "API V1 Sessions", type: :request do
         "Authorization" => "Bearer invalid_token"
       }
 
-      expect([401, 403]).to include(response.status)
+      expect([ 401, 403 ]).to include(response.status)
     end
   end
 end

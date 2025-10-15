@@ -1,5 +1,5 @@
 class V1::SessionsController < ApplicationController
-  allow_unauthenticated_access only: [:create]
+  allow_unauthenticated_access only: [ :create ]
 
   def create
     return render json: { error: "Invalid email address or password" }, status: :unauthorized if session_params[:email_address].blank? || session_params[:password].blank?
