@@ -36,6 +36,8 @@ gem "thruster", require: false
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin Ajax possible
 # gem "rack-cors"
+#
+gem "phony_rails"
 
 group :development, :test do
   # Static analysis for security vulnerabilities [https://brakemanscanner.org/]

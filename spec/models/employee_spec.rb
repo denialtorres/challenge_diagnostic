@@ -51,7 +51,7 @@ RSpec.describe Employee, type: :model do
       ]
 
       valid_emails.each do |email|
-        employee = build(:employee, email_address: email)
+        employee = build(:employee, email_address: email, international_code: "MX")
         expect(employee).to be_valid, "#{email} should be valid"
       end
     end
@@ -66,7 +66,7 @@ RSpec.describe Employee, type: :model do
       ]
 
       invalid_emails.each do |email|
-        employee = build(:employee, email_address: email)
+        employee = build(:employee, email_address: email, international_code: "MX")
         expect(employee).not_to be_valid, "#{email} should be invalid"
         expect(employee.errors[:email_address]).to include('is not a valid email address')
       end
@@ -76,6 +76,121 @@ RSpec.describe Employee, type: :model do
       employee = build(:employee, password: nil)
       expect(employee).not_to be_valid
       expect(employee.errors[:password]).to include("can't be blank")
+    end
+  end
+
+  describe 'phone number validation' do
+    describe 'successful phone validation' do
+      it 'accepts valid US phone numbers and formats them' do
+        employee = build(:employee, phone_number: "2125551234", international_code: "US")
+        expect(employee).to be_valid
+        expect(employee.phone_number).to eq("+1 (212) 555-1234")
+      end
+
+      it 'accepts valid Mexican phone numbers and formats them' do
+        employee = build(:employee, phone_number: "5512345678", international_code: "MX")
+        expect(employee).to be_valid
+        expect(employee.phone_number).to eq("+52 55 1234 5678")
+      end
+
+      it 'accepts valid Canadian phone numbers and formats them' do
+        employee = build(:employee, phone_number: "6045551234", international_code: "CA")
+        expect(employee).to be_valid
+        expect(employee.phone_number).to eq("+1 (604) 555-1234")
+      end
+
+      it 'accepts valid Argentine phone numbers and formats them' do
+        employee = build(:employee, phone_number: "1112345678", international_code: "AR")
+        expect(employee).to be_valid
+        expect(employee.phone_number).to eq("+54 11 1234 5678")
+      end
+
+      it 'defaults to MX when no international_code is provided' do
+        employee = build(:employee, phone_number: "5512345678", international_code: nil)
+        expect(employee).to be_valid
+        expect(employee.phone_number).to eq("+52 55 1234 5678")
+      end
+    end
+
+    describe 'failed phone validation' do
+      it 'rejects phone numbers that are too short' do
+        employee = build(:employee, phone_number: "123", international_code: "US")
+        expect(employee).not_to be_valid
+        expect(employee.errors[:phone_number]).to include("is not a valid phone number")
+      end
+
+      it 'rejects phone numbers with letters' do
+        employee = build(:employee, phone_number: "abc123def", international_code: "US")
+        expect(employee).not_to be_valid
+        expect(employee.errors[:phone_number]).to include("is not a valid phone number")
+      end
+
+      it 'rejects phone numbers that are too long' do
+        employee = build(:employee, phone_number: "1234567890123456", international_code: "US")
+        expect(employee).not_to be_valid
+        expect(employee.errors[:phone_number]).to include("is not a valid phone number")
+      end
+
+      it 'rejects invalid phone patterns' do
+        employee = build(:employee, phone_number: "000000000", international_code: "US")
+        expect(employee).not_to be_valid
+        expect(employee.errors[:phone_number]).to include("is not a valid phone number")
+      end
+    end
+
+    describe 'international_code validation' do
+      it 'accepts valid country codes' do
+        valid_countries = ['US', 'CA', 'MX', 'AR', 'BR', 'CO']
+
+        valid_countries.each do |country|
+          # Use appropriate phone number for each country
+          phone = case country
+                  when 'US', 'CA' then '2125551234'
+                  when 'MX' then '5512345678'
+                  when 'AR' then '1112345678'
+                  when 'BR' then '11987654321'
+                  when 'CO' then '3001234567'
+                  else '2125551234'
+                  end
+          employee = build(:employee, phone_number: phone, international_code: country)
+          expect(employee).to be_valid, "#{country} should be valid"
+        end
+      end
+
+      it 'rejects invalid country codes' do
+        invalid_countries = ['XX', 'ZZ', '123', 'usa', 'UNITED_STATES']
+
+        invalid_countries.each do |country|
+          employee = build(:employee, phone_number: "2125551234", international_code: country)
+          expect(employee).not_to be_valid, "#{country} should be invalid"
+          expect(employee.errors[:international_code]).to include("is not a supported country")
+        end
+      end
+
+      it 'allows blank international_code (defaults to MX)' do
+        employee = build(:employee, phone_number: "5512345678", international_code: "")
+        expect(employee).to be_valid
+      end
+    end
+
+    describe 'edge cases' do
+      it 'handles phone numbers with dashes and formats correctly' do
+        employee = build(:employee, phone_number: "212-555-1234", international_code: "US")
+        expect(employee).to be_valid
+        expect(employee.phone_number).to eq("+1 (212) 555-1234")
+      end
+
+      it 'handles phone numbers with spaces and formats correctly' do
+        employee = build(:employee, phone_number: "212 555 1234", international_code: "US")
+        expect(employee).to be_valid
+        expect(employee.phone_number).to eq("+1 (212) 555-1234")
+      end
+
+      it 'handles phone numbers with parentheses and formats correctly' do
+        employee = build(:employee, phone_number: "(212) 555-1234", international_code: "US")
+        expect(employee).to be_valid
+        expect(employee.phone_number).to eq("+1 (212) 555-1234")
+      end
     end
   end
 
