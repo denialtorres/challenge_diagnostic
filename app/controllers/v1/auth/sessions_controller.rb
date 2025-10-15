@@ -1,4 +1,4 @@
-class V1::SessionsController < ApplicationController
+class V1::Auth::SessionsController < ApplicationController
   allow_unauthenticated_access only: [ :create ]
 
   def create
