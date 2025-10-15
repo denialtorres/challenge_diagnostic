@@ -3,14 +3,11 @@ require 'rails_helper'
 RSpec.describe "API V1 Sessions", type: :request do
   describe "POST /v1/session" do
     it "creates a session with valid credentials" do
-      # Create user directly in the test
-      user = User.create!(
-        email_address: "john@example.com",
-        password: "password123"
-      )
+      # Create user with FactoryBot
+      user = create(:user, email_address: "john@example.com", password: "password123")
 
       post v1_session_path, params: {
-        email_address: "john@example.com",
+        email_address: user.email_address,
         password: "password123"
       }
 
@@ -23,14 +20,11 @@ RSpec.describe "API V1 Sessions", type: :request do
     end
 
     it "does not create session with invalid credentials" do
-      # Create user directly in the test
-      user = User.create!(
-        email_address: "john@example.com",
-        password: "password123"
-      )
+      # Create user with FactoryBot
+      user = create(:user, email_address: "john@example.com", password: "password123")
 
       post v1_session_path, params: {
-        email_address: "john@example.com",
+        email_address: user.email_address,
         password: "invalid"
       }
 
@@ -44,16 +38,9 @@ RSpec.describe "API V1 Sessions", type: :request do
 
   describe "DELETE /v1/session" do
     it "destroys session with valid token" do
-      # Create user and session directly in the test
-      user = User.create!(
-        email_address: "john@example.com",
-        password: "password123"
-      )
-
-      session = user.sessions.create!(
-        user_agent: "Test Browser",
-        ip_address: "127.0.0.1"
-      )
+      # Create user and session with FactoryBot
+      user = create(:user)
+      session = create(:session, user: user)
 
       expect {
         delete v1_session_path, headers: {
