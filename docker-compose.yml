@@ -1,0 +1,27 @@
+include:
+  - .docker/postgres.yml
+
+x-base: &base
+  build:
+    context: .
+    dockerfile: .docker/Dockerfile.dev
+  stdin_open: true
+  tty: true
+
+services:
+  app:
+    <<: *base
+    restart: on-failure
+    volumes:
+      - .:/app:cached
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres/diagnostic_development
+      POSTGRES_PASSWORD: postgres
+
+networks:
+  backend:
+    driver: "bridge"
