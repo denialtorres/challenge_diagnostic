@@ -10,11 +10,6 @@ class V1::SessionController < ApplicationController
     end
   end
 
-  def destroy
-    terminate_session
-    render json: { message: "Logged out" }, status: :ok
-  end
-
   private
 
   def session_params
