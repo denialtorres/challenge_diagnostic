@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   scan_ruby:
@@ -62,5 +62,7 @@ jobs:
       - name: Run tests
         env:
           RAILS_ENV: test
+          GITHUB_CLIENT_ID: ${{secrets.GH_CLIENT_ID}}
+          GITHUB_SECRET_ID: ${{secrets.GH_SECRET_ID}}
           # REDIS_URL: redis://localhost:6379/0
-        run: bin/rails db:test:prepare test
+        run: bundle exec rspec --format documentation
