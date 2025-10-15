@@ -8,8 +8,8 @@ Rails.application.routes.draw do
 
   namespace :v1 do
     namespace :auth do
-      post :login, to: 'sessions#create'
-      delete :logout, to: 'sessions#destroy'
+      post :login, to: "sessions#create"
+      delete :logout, to: "sessions#destroy"
     end
   end
   # Defines the root path route ("/")

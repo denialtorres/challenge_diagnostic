@@ -60,7 +60,7 @@ RSpec.describe "API V1 Auth", type: :request do
         "Authorization" => "Bearer invalid_token"
       }
 
-      expect([401, 403]).to include(response.status)
+      expect([ 401, 403 ]).to include(response.status)
     end
   end
 end
