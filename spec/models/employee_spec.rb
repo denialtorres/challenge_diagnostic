@@ -37,6 +37,41 @@ RSpec.describe Employee, type: :model do
       expect(employee.errors[:phone_number]).to include("can't be blank")
     end
 
+    it 'validates email_address format' do
+      employee = build(:employee, email_address: 'plainaddress')
+      expect(employee).not_to be_valid
+      expect(employee.errors[:email_address]).to include('is not a valid email address')
+    end
+
+    it 'accepts valid email_address formats' do
+      valid_emails = [
+        'test@example.com',
+        'user.name@domain.co.uk',
+        'first-last@subdomain.example.org'
+      ]
+
+      valid_emails.each do |email|
+        employee = build(:employee, email_address: email)
+        expect(employee).to be_valid, "#{email} should be valid"
+      end
+    end
+
+    it 'rejects invalid email_address formats' do
+      invalid_emails = [
+        'plainaddress',
+        '@missingdomain.com',
+        'missing@.com',
+        'spaces @domain.com',
+        'multiple@@domain.com'
+      ]
+
+      invalid_emails.each do |email|
+        employee = build(:employee, email_address: email)
+        expect(employee).not_to be_valid, "#{email} should be invalid"
+        expect(employee.errors[:email_address]).to include('is not a valid email address')
+      end
+    end
+
     it 'requires password (inherited from User)' do
       employee = build(:employee, password: nil)
       expect(employee).not_to be_valid
