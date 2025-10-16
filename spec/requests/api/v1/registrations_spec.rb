@@ -1,289 +1,369 @@
 require 'rails_helper'
+require 'swagger_helper'
 
-RSpec.describe "API V1 Auth Registrations", type: :request do
+RSpec.describe 'Registrations API', type: :request do
   before(:each) do
     User.destroy_all
     Session.destroy_all
   end
 
-  describe "POST /v1/auth/registrations" do
-    context "with valid employee data" do
-      it "creates an employee and returns token with employee data" do
-        post v1_auth_registrations_path, params: {
-          email_address: "john.doe@example.com",
-          password: "password123",
-          password_confirmation: "password123",
-          first_name: "John",
-          last_name: "Doe",
-          date_of_birth: "1990-01-15",
-          phone_number: "5512345678",
-          international_code: "MX"
-        }
+  path "/v1/auth/registrations" do
+    post "Registers a new employee and returns authentication token" do
+      tags "Authentication"
+      consumes "application/json"
+      produces "application/json"
 
-        expect(response).to have_http_status(:created)
-        expect(response.content_type).to match(a_string_including("application/json"))
+      parameter name: :registration_params, in: :body, schema: {
+        type: :object,
+        properties: {
+          email_address: { type: :string, format: :email, example: "john.doe@example.com" },
+          password: { type: :string, format: :password, example: "password123" },
+          password_confirmation: { type: :string, format: :password, example: "password123" },
+          first_name: { type: :string, example: "John" },
+          last_name: { type: :string, example: "Doe" },
+          date_of_birth: { type: :string, format: :date, example: "1990-01-15" },
+          phone_number: { type: :string, example: "5512345678" },
+          international_code: { type: :string, example: "MX", enum: [ "MX", "US", "CA" ] }
+        },
+        required: [ "email_address", "password", "password_confirmation", "first_name", "last_name", "date_of_birth", "phone_number", "international_code" ]
+      }
 
-        json_response = JSON.parse(response.body)
-        expect(json_response).to have_key("token")
-        expect(json_response).to have_key("employee")
-        expect(json_response["token"]).to be_present
+      response "201", "Employee created successfully" do
+        let(:email_address) { "john.doe@example.com" }
+        let(:password) { "password123" }
+        let(:password_confirmation) { "password123" }
+        let(:first_name) { "John" }
+        let(:last_name) { "Doe" }
+        let(:date_of_birth) { "1990-01-15" }
+        let(:phone_number) { "5512345678" }
+        let(:international_code) { "MX" }
+        let(:registration_params) { { email_address: email_address, password: password,
+                                      password_confirmation: password_confirmation, first_name: first_name,
+                                      last_name: last_name, date_of_birth: date_of_birth,
+                                      phone_number: phone_number, international_code: international_code
+                                    } }
 
-        employee_data = json_response["employee"]
-        expect(employee_data["email_address"]).to eq("john.doe@example.com")
-        expect(employee_data["first_name"]).to eq("John")
-        expect(employee_data["last_name"]).to eq("Doe")
-        expect(employee_data["phone_number"]).to eq("+52 55 1234 5678")
-        expect(employee_data["type"]).to eq("Employee")
+        run_test! do
+          expect(response).to have_http_status(:created)
+          expect(response.content_type).to match(a_string_including("application/json"))
+
+          json_response = JSON.parse(response.body)
+          expect(json_response).to have_key("token")
+          expect(json_response).to have_key("employee")
+          expect(json_response["token"]).to be_present
+
+          employee_data = json_response["employee"]
+          expect(employee_data["email_address"]).to eq("john.doe@example.com")
+          expect(employee_data["first_name"]).to eq("John")
+          expect(employee_data["last_name"]).to eq("Doe")
+          expect(employee_data["phone_number"]).to eq("+52 55 1234 5678")
+          expect(employee_data["type"]).to eq("Employee")
+        end
       end
 
-      it "creates an employee with US phone number" do
-        post v1_auth_registrations_path, params: {
-          email_address: "jane.smith@example.com",
-          password: "password123",
-          password_confirmation: "password123",
-          first_name: "Jane",
-          last_name: "Smith",
-          date_of_birth: "1988-06-20",
-          phone_number: "2125551234",
-          international_code: "US"
-        }
+      response "201", "Employee created successfully with US phone number" do
+        let(:email_address) { "jane.smith@example.com" }
+        let(:password) { "password123" }
+        let(:password_confirmation) { "password123" }
+        let(:first_name) { "Jane" }
+        let(:last_name) { "Smith" }
+        let(:date_of_birth) { "1988-06-20" }
+        let(:phone_number) { "2125551234" }
+        let(:international_code) { "US" }
+        let(:registration_params) { { email_address: email_address, password: password,
+                                      password_confirmation: password_confirmation, first_name: first_name,
+                                      last_name: last_name, date_of_birth: date_of_birth,
+                                      phone_number: phone_number, international_code: international_code
+                                    } }
 
-        expect(response).to have_http_status(:created)
-        json_response = JSON.parse(response.body)
-        expect(json_response["employee"]["phone_number"]).to eq("+1 (212) 555-1234")
+        run_test! do
+          expect(response).to have_http_status(:created)
+          json_response = JSON.parse(response.body)
+          expect(json_response["employee"]["phone_number"]).to eq("+1 (212) 555-1234")
+        end
       end
 
-      it "creates an employee with Canadian phone number" do
-        post v1_auth_registrations_path, params: {
-          email_address: "bob.johnson@example.com",
-          password: "password123",
-          password_confirmation: "password123",
-          first_name: "Bob",
-          last_name: "Johnson",
-          date_of_birth: "1985-12-01",
-          phone_number: "6045551234",
-          international_code: "CA"
-        }
+      response "201", "Employee created successfully with Canadian phone number" do
+        let(:email_address) { "bob.johnson@example.com" }
+        let(:password) { "password123" }
+        let(:password_confirmation) { "password123" }
+        let(:first_name) { "Bob" }
+        let(:last_name) { "Johnson" }
+        let(:date_of_birth) { "1985-12-01" }
+        let(:phone_number) { "6045551234" }
+        let(:international_code) { "CA" }
+        let(:registration_params) { { email_address: email_address, password: password,
+                                      password_confirmation: password_confirmation, first_name: first_name,
+                                      last_name: last_name, date_of_birth: date_of_birth,
+                                      phone_number: phone_number, international_code: international_code
+                                    } }
 
-        expect(response).to have_http_status(:created)
-        json_response = JSON.parse(response.body)
-        expect(json_response["employee"]["phone_number"]).to eq("+1 (604) 555-1234")
-      end
-    end
-
-    context "with missing required fields" do
-      it "returns error when first_name is missing" do
-        post v1_auth_registrations_path, params: {
-          email_address: "test@example.com",
-          password: "password123",
-          password_confirmation: "password123",
-          last_name: "Doe",
-          date_of_birth: "1990-01-15",
-          phone_number: "5512345678",
-          international_code: "MX"
-        }
-
-        expect(response).to have_http_status(:unprocessable_content)
-        json_response = JSON.parse(response.body)
-        expect(json_response["error"]).to include("First name can't be blank")
+        run_test! do
+          expect(response).to have_http_status(:created)
+          json_response = JSON.parse(response.body)
+          expect(json_response["employee"]["phone_number"]).to eq("+1 (604) 555-1234")
+        end
       end
 
-      it "returns error when last_name is missing" do
-        post v1_auth_registrations_path, params: {
-          email_address: "test@example.com",
-          password: "password123",
-          password_confirmation: "password123",
-          first_name: "John",
-          date_of_birth: "1990-01-15",
-          phone_number: "5512345678",
-          international_code: "MX"
-        }
+      response "422", "Validation error - missing first_name" do
+        let(:email_address) { "test@example.com" }
+        let(:password) { "password123" }
+        let(:password_confirmation) { "password123" }
+        let(:last_name) { "Doe" }
+        let(:date_of_birth) { "1990-01-15" }
+        let(:phone_number) { "5512345678" }
+        let(:international_code) { "MX" }
+        let(:registration_params) { { email_address: email_address, password: password,
+                                      password_confirmation: password_confirmation,
+                                      last_name: last_name, date_of_birth: date_of_birth,
+                                      phone_number: phone_number, international_code: international_code
+                                    } }
 
-        expect(response).to have_http_status(:unprocessable_content)
-        json_response = JSON.parse(response.body)
-        expect(json_response["error"]).to include("Last name can't be blank")
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_content)
+          json_response = JSON.parse(response.body)
+          expect(json_response["error"]).to include("First name can't be blank")
+        end
       end
 
-      it "returns error when date_of_birth is missing" do
-        post v1_auth_registrations_path, params: {
-          email_address: "test@example.com",
-          password: "password123",
-          password_confirmation: "password123",
-          first_name: "John",
-          last_name: "Doe",
-          phone_number: "5512345678",
-          international_code: "MX"
-        }
+      response "422", "Validation error - missing last_name" do
+        let(:email_address) { "test@example.com" }
+        let(:password) { "password123" }
+        let(:password_confirmation) { "password123" }
+        let(:first_name) { "John" }
+        let(:date_of_birth) { "1990-01-15" }
+        let(:phone_number) { "5512345678" }
+        let(:international_code) { "MX" }
+        let(:registration_params) { { email_address: email_address, password: password,
+                                      password_confirmation: password_confirmation, first_name: first_name,
+                                      date_of_birth: date_of_birth,
+                                      phone_number: phone_number, international_code: international_code
+                                    } }
 
-        expect(response).to have_http_status(:unprocessable_content)
-        json_response = JSON.parse(response.body)
-        expect(json_response["error"]).to include("Date of birth can't be blank")
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_content)
+          json_response = JSON.parse(response.body)
+          expect(json_response["error"]).to include("Last name can't be blank")
+        end
       end
 
-      it "returns error when phone_number is missing" do
-        post v1_auth_registrations_path, params: {
-          email_address: "test@example.com",
-          password: "password123",
-          password_confirmation: "password123",
-          first_name: "John",
-          last_name: "Doe",
-          date_of_birth: "1990-01-15",
-          international_code: "MX"
-        }
+      response "422", "Validation error - missing date_of_birth" do
+        let(:email_address) { "test@example.com" }
+        let(:password) { "password123" }
+        let(:password_confirmation) { "password123" }
+        let(:first_name) { "John" }
+        let(:last_name) { "Doe" }
+        let(:phone_number) { "5512345678" }
+        let(:international_code) { "MX" }
+        let(:registration_params) { { email_address: email_address, password: password,
+                                      password_confirmation: password_confirmation, first_name: first_name,
+                                      last_name: last_name,
+                                      phone_number: phone_number, international_code: international_code
+                                    } }
 
-        expect(response).to have_http_status(:unprocessable_content)
-        json_response = JSON.parse(response.body)
-        expect(json_response["error"]).to include("Phone number can't be blank")
-      end
-    end
-
-    context "with invalid email format" do
-      it "returns error for invalid email" do
-        post v1_auth_registrations_path, params: {
-          email_address: "not-an-email",
-          password: "password123",
-          password_confirmation: "password123",
-          first_name: "John",
-          last_name: "Doe",
-          date_of_birth: "1990-01-15",
-          phone_number: "5512345678",
-          international_code: "MX"
-        }
-
-        expect(response).to have_http_status(:unprocessable_content)
-        json_response = JSON.parse(response.body)
-        expect(json_response["error"]).to include("Email address is not a valid email address")
-      end
-    end
-
-    context "with invalid phone number" do
-      it "returns error for phone number too short" do
-        post v1_auth_registrations_path, params: {
-          email_address: "john.doe@example.com",
-          password: "password123",
-          password_confirmation: "password123",
-          first_name: "John",
-          last_name: "Doe",
-          date_of_birth: "1990-01-15",
-          phone_number: "123",
-          international_code: "MX"
-        }
-
-        expect(response).to have_http_status(:unprocessable_content)
-        json_response = JSON.parse(response.body)
-        expect(json_response["error"]).to include("Phone number is not a valid phone number")
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_content)
+          json_response = JSON.parse(response.body)
+          expect(json_response["error"]).to include("Date of birth can't be blank")
+        end
       end
 
-      it "returns error for phone number with letters" do
-        post v1_auth_registrations_path, params: {
-          email_address: "john.doe@example.com",
-          password: "password123",
-          password_confirmation: "password123",
-          first_name: "John",
-          last_name: "Doe",
-          date_of_birth: "1990-01-15",
-          phone_number: "abc123def",
-          international_code: "MX"
-        }
+      response "422", "Validation error - missing phone_number" do
+        let(:email_address) { "test@example.com" }
+        let(:password) { "password123" }
+        let(:password_confirmation) { "password123" }
+        let(:first_name) { "John" }
+        let(:last_name) { "Doe" }
+        let(:date_of_birth) { "1990-01-15" }
+        let(:international_code) { "MX" }
+        let(:registration_params) { { email_address: email_address, password: password,
+                                      password_confirmation: password_confirmation, first_name: first_name,
+                                      last_name: last_name, date_of_birth: date_of_birth,
+                                      international_code: international_code
+                                    } }
 
-        expect(response).to have_http_status(:unprocessable_content)
-        json_response = JSON.parse(response.body)
-        expect(json_response["error"]).to include("Phone number is not a valid phone number")
-      end
-    end
-
-    context "with invalid country code" do
-      it "returns error for invalid international_code" do
-        post v1_auth_registrations_path, params: {
-          email_address: "john.doe@example.com",
-          password: "password123",
-          password_confirmation: "password123",
-          first_name: "John",
-          last_name: "Doe",
-          date_of_birth: "1990-01-15",
-          phone_number: "5512345678",
-          international_code: "INVALID"
-        }
-
-        expect(response).to have_http_status(:unprocessable_content)
-        json_response = JSON.parse(response.body)
-        expect(json_response["error"]).to include("International code is not a supported country")
-      end
-    end
-
-    context "with password validation errors" do
-      it "returns error when password is too short" do
-        post v1_auth_registrations_path, params: {
-          email_address: "john.doe@example.com",
-          password: "123",
-          password_confirmation: "123",
-          first_name: "John",
-          last_name: "Doe",
-          date_of_birth: "1990-01-15",
-          phone_number: "5512345678",
-          international_code: "MX"
-        }
-
-        expect(response).to have_http_status(:unprocessable_content)
-        json_response = JSON.parse(response.body)
-        expect(json_response["error"]).to be_present
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_content)
+          json_response = JSON.parse(response.body)
+          expect(json_response["error"]).to include("Phone number can't be blank")
+        end
       end
 
-      it "returns error when password confirmation doesn't match" do
-        post v1_auth_registrations_path, params: {
-          email_address: "john.doe@example.com",
-          password: "password123",
-          password_confirmation: "different_password",
-          first_name: "John",
-          last_name: "Doe",
-          date_of_birth: "1990-01-15",
-          phone_number: "5512345678",
-          international_code: "MX"
-        }
+      response "422", "Validation error - invalid email format" do
+        let(:email_address) { "not-an-email" }
+        let(:password) { "password123" }
+        let(:password_confirmation) { "password123" }
+        let(:first_name) { "John" }
+        let(:last_name) { "Doe" }
+        let(:date_of_birth) { "1990-01-15" }
+        let(:phone_number) { "5512345678" }
+        let(:international_code) { "MX" }
+        let(:registration_params) { { email_address: email_address, password: password,
+                                      password_confirmation: password_confirmation, first_name: first_name,
+                                      last_name: last_name, date_of_birth: date_of_birth,
+                                      phone_number: phone_number, international_code: international_code
+                                    } }
 
-        expect(response).to have_http_status(:unprocessable_content)
-        json_response = JSON.parse(response.body)
-        expect(json_response["error"]).to be_present
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_content)
+          json_response = JSON.parse(response.body)
+          expect(json_response["error"]).to include("Email address is not a valid email address")
+        end
       end
-    end
 
-    context "with multiple validation errors" do
-      it "returns all validation errors" do
-        post v1_auth_registrations_path, params: {
-          email_address: "invalid-email",
-          password: "123",
-          password_confirmation: "different",
-          phone_number: "abc123",
-          international_code: "WRONG"
-        }
+      response "422", "Validation error - phone number too short" do
+        let(:email_address) { "john.doe@example.com" }
+        let(:password) { "password123" }
+        let(:password_confirmation) { "password123" }
+        let(:first_name) { "John" }
+        let(:last_name) { "Doe" }
+        let(:date_of_birth) { "1990-01-15" }
+        let(:phone_number) { "123" }
+        let(:international_code) { "MX" }
+        let(:registration_params) { { email_address: email_address, password: password,
+                                      password_confirmation: password_confirmation, first_name: first_name,
+                                      last_name: last_name, date_of_birth: date_of_birth,
+                                      phone_number: phone_number, international_code: international_code
+                                    } }
 
-        expect(response).to have_http_status(:unprocessable_content)
-        json_response = JSON.parse(response.body)
-        expect(json_response["error"]).to be_an(Array)
-        expect(json_response["error"].length).to be > 1
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_content)
+          json_response = JSON.parse(response.body)
+          expect(json_response["error"]).to include("Phone number is not a valid phone number")
+        end
       end
-    end
 
-    context "with duplicate email address" do
-      it "handles duplicate email gracefully" do
-        # First, create an employee
-        create(:employee, email_address: "duplicate@example.com")
+      response "422", "Validation error - phone number with letters" do
+        let(:email_address) { "john.doe@example.com" }
+        let(:password) { "password123" }
+        let(:password_confirmation) { "password123" }
+        let(:first_name) { "John" }
+        let(:last_name) { "Doe" }
+        let(:date_of_birth) { "1990-01-15" }
+        let(:phone_number) { "abc123def" }
+        let(:international_code) { "MX" }
+        let(:registration_params) { { email_address: email_address, password: password,
+                                      password_confirmation: password_confirmation, first_name: first_name,
+                                      last_name: last_name, date_of_birth: date_of_birth,
+                                      phone_number: phone_number, international_code: international_code
+                                    } }
 
-        # Try to create another with same email
-        post v1_auth_registrations_path, params: {
-          email_address: "duplicate@example.com",
-          password: "password123",
-          password_confirmation: "password123",
-          first_name: "John",
-          last_name: "Doe",
-          date_of_birth: "1990-01-15",
-          phone_number: "5512345678",
-          international_code: "MX"
-        }
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_content)
+          json_response = JSON.parse(response.body)
+          expect(json_response["error"]).to include("Phone number is not a valid phone number")
+        end
+      end
 
-        expect(response).to have_http_status(:unprocessable_content)
-        json_response = JSON.parse(response.body)
-        expect(json_response["error"]).to be_present
+      response "422", "Validation error - invalid international_code" do
+        let(:email_address) { "john.doe@example.com" }
+        let(:password) { "password123" }
+        let(:password_confirmation) { "password123" }
+        let(:first_name) { "John" }
+        let(:last_name) { "Doe" }
+        let(:date_of_birth) { "1990-01-15" }
+        let(:phone_number) { "5512345678" }
+        let(:international_code) { "INVALID" }
+        let(:registration_params) { { email_address: email_address, password: password,
+                                      password_confirmation: password_confirmation, first_name: first_name,
+                                      last_name: last_name, date_of_birth: date_of_birth,
+                                      phone_number: phone_number, international_code: international_code
+                                    } }
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_content)
+          json_response = JSON.parse(response.body)
+          expect(json_response["error"]).to include("International code is not a supported country")
+        end
+      end
+
+      response "422", "Validation error - password too short" do
+        let(:email_address) { "john.doe@example.com" }
+        let(:password) { "123" }
+        let(:password_confirmation) { "123" }
+        let(:first_name) { "John" }
+        let(:last_name) { "Doe" }
+        let(:date_of_birth) { "1990-01-15" }
+        let(:phone_number) { "5512345678" }
+        let(:international_code) { "MX" }
+        let(:registration_params) { { email_address: email_address, password: password,
+                                      password_confirmation: password_confirmation, first_name: first_name,
+                                      last_name: last_name, date_of_birth: date_of_birth,
+                                      phone_number: phone_number, international_code: international_code
+                                    } }
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_content)
+          json_response = JSON.parse(response.body)
+          expect(json_response["error"]).to be_present
+        end
+      end
+
+      response "422", "Validation error - password confirmation doesn't match" do
+        let(:email_address) { "john.doe@example.com" }
+        let(:password) { "password123" }
+        let(:password_confirmation) { "different_password" }
+        let(:first_name) { "John" }
+        let(:last_name) { "Doe" }
+        let(:date_of_birth) { "1990-01-15" }
+        let(:phone_number) { "5512345678" }
+        let(:international_code) { "MX" }
+        let(:registration_params) { { email_address: email_address, password: password,
+                                      password_confirmation: password_confirmation, first_name: first_name,
+                                      last_name: last_name, date_of_birth: date_of_birth,
+                                      phone_number: phone_number, international_code: international_code
+                                    } }
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_content)
+          json_response = JSON.parse(response.body)
+          expect(json_response["error"]).to be_present
+        end
+      end
+
+      response "422", "Multiple validation errors" do
+        let(:email_address) { "invalid-email" }
+        let(:password) { "123" }
+        let(:password_confirmation) { "different" }
+        let(:phone_number) { "abc123" }
+        let(:international_code) { "WRONG" }
+        let(:registration_params) { { email_address: email_address, password: password,
+                                      password_confirmation: password_confirmation,
+                                      phone_number: phone_number, international_code: international_code
+                                    } }
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_content)
+          json_response = JSON.parse(response.body)
+          expect(json_response["error"]).to be_an(Array)
+          expect(json_response["error"].length).to be > 1
+        end
+      end
+
+      response "422", "Validation error - duplicate email address" do
+        let(:email_address) { "duplicate@example.com" }
+        let(:password) { "password123" }
+        let(:password_confirmation) { "password123" }
+        let(:first_name) { "John" }
+        let(:last_name) { "Doe" }
+        let(:date_of_birth) { "1990-01-15" }
+        let(:phone_number) { "5512345678" }
+        let(:international_code) { "MX" }
+        let(:registration_params) { { email_address: email_address, password: password,
+                                      password_confirmation: password_confirmation, first_name: first_name,
+                                      last_name: last_name, date_of_birth: date_of_birth,
+                                      phone_number: phone_number, international_code: international_code
+                                    } }
+
+        before do
+          create(:employee, email_address: "duplicate@example.com")
+        end
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_content)
+          json_response = JSON.parse(response.body)
+          expect(json_response["error"]).to be_present
+        end
       end
     end
   end
