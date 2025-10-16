@@ -116,6 +116,8 @@ GEM
     json-schema (5.2.2)
       addressable (~> 2.8)
       bigdecimal (~> 3.1)
+    jsonapi-serializer (2.2.0)
+      activesupport (>= 4.2)
     kamal (2.7.0)
       activesupport (>= 7.0)
       base64 (~> 0.2)
@@ -374,6 +376,7 @@ DEPENDENCIES
   bootsnap
   brakeman
   factory_bot
+  jsonapi-serializer
   kamal
   pg
   phony_rails
