@@ -1,0 +1,63 @@
+---
+openapi: 3.0.1
+info:
+  title: API V1
+  version: v1
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+paths:
+  "/v1/auth/login":
+    post:
+      summary: Authenticates user and creates session
+      tags:
+        - Authentication
+      parameters: []
+      responses:
+        "200":
+          description: Session created successfully
+        "401":
+          description: Invalid credentials
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email_address:
+                  type: string
+                  format: email
+                  example: john.doe@example.com
+                password:
+                  type: string
+                  format: password
+                  example: password123
+              required:
+                - email_address
+                - password
+  "/v1/auth/logout":
+    delete:
+      summary: Destroys user session
+      tags:
+        - Authentication
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: Bearer token for authentication
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Session destroyed successfully
+        "401":
+          description: Invalid or missing token
+servers:
+  - url: http://{defaultHost}
+    variables:
+      defaultHost:
+        default: localhost:3000

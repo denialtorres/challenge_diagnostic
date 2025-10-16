@@ -38,6 +38,9 @@ gem "thruster", require: false
 # gem "rack-cors"
 #
 gem "phony_rails"
+# for api documentation
+gem "rswag-api"
+gem "rswag-ui"
 
 group :development, :test do
   # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
@@ -48,4 +51,5 @@ group :development, :test do
   gem "rspec-rails", "~> 8.0.0"
   gem "pry"
   gem "factory_bot"
+  gem "rswag-specs"
 end
