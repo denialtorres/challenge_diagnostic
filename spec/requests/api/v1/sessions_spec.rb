@@ -20,6 +20,7 @@ RSpec.describe 'Sessions API', type: :request do
       response "200", "Session created successfully" do
         let(:email_address) { "john@example.com" }
         let(:password) { "password123" }
+        let(:user_params) { { email_address: email_address, password: password } }
 
         before do
           create(:user, email_address: "john@example.com", password: "password123")
@@ -38,6 +39,7 @@ RSpec.describe 'Sessions API', type: :request do
       response "401", "Invalid credentials" do
         let(:email_address) { "john@example.com" }
         let(:password) { "invalid" }
+        let(:user_params) { { email_address: email_address, password: password } }
 
         before do
           create(:user, email_address: "john@example.com", password: "password123")
