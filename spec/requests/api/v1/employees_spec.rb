@@ -484,5 +484,72 @@ RSpec.describe 'Employees API', type: :request do
         end
       end
     end
+
+    delete "Deletes an existing employee" do
+      tags "Employees"
+      consumes "application/json"
+      produces "application/json"
+      security [ Bearer: [] ]
+
+      parameter name: :Authorization, in: :header, type: :string, required: true, description: "Bearer token"
+
+      response "200", "Employee deleted successfully" do
+        let(:user) { create(:user, email_address: "john13@example.com", password: "password123") }
+        let(:session_record) { create(:session, user: user) }
+        let(:token) { session_record.token }
+        let(:Authorization) { "Bearer #{token}" }
+        let(:employee) { create(:employee, email_address: "to.delete@example.com", first_name: "ToDelete", last_name: "Employee") }
+        let(:id) { employee.id }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+          expect(response.content_type).to match(a_string_including("application/json"))
+
+          json_response = JSON.parse(response.body)
+          expect(json_response).to have_key("message")
+          expect(json_response["message"]).to eq("Employee deleted successfully")
+
+          # Verify employee was actually deleted from database
+          expect { Employee.find(employee.id) }.to raise_error(ActiveRecord::RecordNotFound)
+        end
+      end
+
+      response "404", "Employee not found for deletion" do
+        let(:user) { create(:user, email_address: "john14@example.com", password: "password123") }
+        let(:session_record) { create(:session, user: user) }
+        let(:token) { session_record.token }
+        let(:Authorization) { "Bearer #{token}" }
+        let(:id) { 99999 }
+
+        run_test! do
+          expect(response).to have_http_status(:not_found)
+          expect(response.content_type).to match(a_string_including("application/json"))
+
+          json_response = JSON.parse(response.body)
+          expect(json_response).to have_key("error")
+          expect(json_response["error"]).to eq("Employee not found")
+        end
+      end
+
+      response "401", "Unauthorized - missing token" do
+        let(:employee) { create(:employee) }
+        let(:id) { employee.id }
+        let(:Authorization) { "" }
+
+        run_test! do
+          expect([ 401, 403 ]).to include(response.status)
+        end
+      end
+
+      response "401", "Unauthorized - invalid token" do
+        let(:employee) { create(:employee) }
+        let(:id) { employee.id }
+        let(:Authorization) { "Bearer invalid_token_here" }
+
+        run_test! do
+          expect([ 401, 403 ]).to include(response.status)
+        end
+      end
+    end
   end
 end

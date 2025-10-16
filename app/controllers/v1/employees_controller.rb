@@ -45,6 +45,14 @@ class V1::EmployeesController < ApplicationController
     render json: { error: "Employee not found" }, status: :not_found
   end
 
+  def destroy
+    employee = Employee.find(params[:id])
+    employee.destroy
+    render json: { message: "Employee deleted successfully" }, status: :ok
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Employee not found" }, status: :not_found
+  end
+
   private
 
   def employee_params

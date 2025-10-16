@@ -450,6 +450,48 @@ paths:
                     - MX
                     - US
                     - CA
+    delete:
+      summary: Deletes an existing employee
+      tags:
+        - Employees
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Employee ID
+          schema:
+            type: integer
+            example: 1
+        - name: Authorization
+          in: header
+          description: Bearer token
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Employee deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Employee deleted successfully
+        "404":
+          description: Employee not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Employee not found
+        "401":
+          description: Unauthorized - missing or invalid token
 servers:
   - url: http://{defaultHost}
     variables:
