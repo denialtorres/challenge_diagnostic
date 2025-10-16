@@ -323,5 +323,166 @@ RSpec.describe 'Employees API', type: :request do
         end
       end
     end
+
+    put "Updates an existing employee" do
+      tags "Employees"
+      consumes "application/json"
+      produces "application/json"
+      security [ Bearer: [] ]
+
+      parameter name: :Authorization, in: :header, type: :string, required: true, description: "Bearer token"
+      parameter name: :employee_params, in: :body, schema: {
+        type: :object,
+        properties: {
+          email_address: { type: :string, format: :email, example: "updated.employee@example.com" },
+          first_name: { type: :string, example: "Updated" },
+          last_name: { type: :string, example: "Employee" },
+          date_of_birth: { type: :string, format: :date, example: "1990-01-01" },
+          phone_number: { type: :string, example: "5599887766" },
+          international_code: { type: :string, example: "MX", enum: [ "MX", "US", "CA" ] }
+        }
+      }
+
+      response "200", "Employee updated successfully" do
+        let(:user) { create(:user, email_address: "john8@example.com", password: "password123") }
+        let(:session_record) { create(:session, user: user) }
+        let(:token) { session_record.token }
+        let(:Authorization) { "Bearer #{token}" }
+        let(:employee) { create(:employee, email_address: "original.employee@example.com", first_name: "Original", last_name: "Employee") }
+        let(:id) { employee.id }
+        let(:first_name) { "Updated" }
+        let(:last_name) { "Employee" }
+        let(:phone_number) { "5599887766" }
+        let(:international_code) { "MX" }
+        let(:employee_params) { { first_name: first_name, last_name: last_name,
+                                  phone_number: phone_number, international_code: international_code
+                                } }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+          expect(response.content_type).to match(a_string_including("application/json"))
+
+          json_response = JSON.parse(response.body)
+          expect(json_response).to be_a(Hash)
+
+          # Check that the employee has the expected structure
+          expect(json_response).to have_key("id")
+          expect(json_response).to have_key("email_address")
+          expect(json_response).to have_key("first_name")
+          expect(json_response).to have_key("last_name")
+          expect(json_response).to have_key("phone_number")
+          expect(json_response).to have_key("created_at")
+          expect(json_response).to have_key("updated_at")
+          expect(json_response).to have_key("type")
+
+          # Verify updated employee data
+          expect(json_response["id"]).to eq(employee.id)
+          expect(json_response["email_address"]).to eq("original.employee@example.com") # unchanged
+          expect(json_response["first_name"]).to eq("Updated")
+          expect(json_response["last_name"]).to eq("Employee")
+          expect(json_response["phone_number"]).to eq("+52 55 9988 7766")
+          expect(json_response["type"]).to eq("Employee")
+
+          # Verify employee was actually updated in database
+          updated_employee = Employee.find(employee.id)
+          expect(updated_employee.first_name).to eq("Updated")
+        end
+      end
+
+      response "200", "Employee updated with partial data" do
+        let(:user) { create(:user, email_address: "john9@example.com", password: "password123") }
+        let(:session_record) { create(:session, user: user) }
+        let(:token) { session_record.token }
+        let(:Authorization) { "Bearer #{token}" }
+        let(:employee) { create(:employee, email_address: "partial.employee@example.com", first_name: "Original", last_name: "Name") }
+        let(:id) { employee.id }
+        let(:first_name) { "OnlyFirstName" }
+        let(:employee_params) { { first_name: first_name } }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+          json_response = JSON.parse(response.body)
+          expect(json_response["first_name"]).to eq("OnlyFirstName")
+          expect(json_response["last_name"]).to eq("Name") # unchanged
+        end
+      end
+
+      response "404", "Employee not found for update" do
+        let(:user) { create(:user, email_address: "john10@example.com", password: "password123") }
+        let(:session_record) { create(:session, user: user) }
+        let(:token) { session_record.token }
+        let(:Authorization) { "Bearer #{token}" }
+        let(:id) { 99999 }
+        let(:employee_params) { { first_name: "DoesNotMatter" } }
+
+        run_test! do
+          expect(response).to have_http_status(:not_found)
+          expect(response.content_type).to match(a_string_including("application/json"))
+
+          json_response = JSON.parse(response.body)
+          expect(json_response).to have_key("error")
+          expect(json_response["error"]).to eq("Employee not found")
+        end
+      end
+
+      response "422", "Validation error - invalid email format" do
+        let(:user) { create(:user, email_address: "john11@example.com", password: "password123") }
+        let(:session_record) { create(:session, user: user) }
+        let(:token) { session_record.token }
+        let(:Authorization) { "Bearer #{token}" }
+        let(:employee) { create(:employee, email_address: "valid.employee@example.com", first_name: "Valid", last_name: "Employee") }
+        let(:id) { employee.id }
+        let(:email_address) { "invalid-email" }
+        let(:employee_params) { { email_address: email_address } }
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_entity)
+          json_response = JSON.parse(response.body)
+          expect(json_response).to have_key("error")
+          expect(json_response["error"]).to include("Email address is not a valid email address")
+        end
+      end
+
+      response "422", "Validation error - duplicate email address" do
+        let(:user) { create(:user, email_address: "john12@example.com", password: "password123") }
+        let(:session_record) { create(:session, user: user) }
+        let(:token) { session_record.token }
+        let(:Authorization) { "Bearer #{token}" }
+        let!(:existing_employee) { create(:employee, email_address: "existing@example.com") }
+        let!(:employee) { create(:employee, email_address: "to.update@example.com", first_name: "ToUpdate", last_name: "Employee") }
+        let(:id) { employee.id }
+        let(:email_address) { "existing@example.com" }
+        let(:employee_params) { { email_address: email_address } }
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_entity)
+          json_response = JSON.parse(response.body)
+          expect(json_response).to have_key("error")
+          expect(json_response["error"]).to include("Email address has already been taken")
+        end
+      end
+
+      response "401", "Unauthorized - missing token" do
+        let(:employee) { create(:employee) }
+        let(:id) { employee.id }
+        let(:Authorization) { "" }
+        let(:employee_params) { { first_name: "DoesNotMatter" } }
+
+        run_test! do
+          expect([ 401, 403 ]).to include(response.status)
+        end
+      end
+
+      response "401", "Unauthorized - invalid token" do
+        let(:employee) { create(:employee) }
+        let(:id) { employee.id }
+        let(:Authorization) { "Bearer invalid_token_here" }
+        let(:employee_params) { { first_name: "DoesNotMatter" } }
+
+        run_test! do
+          expect([ 401, 403 ]).to include(response.status)
+        end
+      end
+    end
   end
 end

@@ -13,7 +13,7 @@ Rails.application.routes.draw do
       delete :logout, to: "sessions#destroy"
       resources :registrations, only: %i[create]
     end
-    resources :employees, only: %i[index show create]
+    resources :employees, only: %i[index show create update]
   end
   # Defines the root path route ("/")
   # root "posts#index"
