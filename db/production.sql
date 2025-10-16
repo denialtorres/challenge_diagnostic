@@ -1,0 +1,4 @@
+CREATE DATABASE diagnostic_production
+CREATE DATABASE diagnostic_production_cache;
+CREATE DATABASE diagnostic_production_queue;
+CREATE DATABASE diagnostic_production_cable;
