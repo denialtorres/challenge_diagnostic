@@ -116,7 +116,7 @@ paths:
                 - international_code
   "/v1/employees":
     get:
-      summary: Retrieves a list of all employees
+      summary: Retrieves a paginated list of all employees
       tags:
         - Employees
       security:
@@ -127,43 +127,90 @@ paths:
           description: Bearer token
           schema:
             type: string
+        - name: page_token
+          in: query
+          description: Token for cursor-based pagination
+          required: false
+          schema:
+            type: string
       responses:
         "200":
-          description: Employees list retrieved successfully
+          description: Paginated employees list retrieved successfully
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                      example: 1
-                    email_address:
-                      type: string
-                      format: email
-                      example: john.doe@example.com
-                    first_name:
-                      type: string
-                      example: John
-                    last_name:
-                      type: string
-                      example: Doe
-                    phone_number:
-                      type: string
-                      example: "+52 55 1234 5678"
-                    created_at:
-                      type: string
-                      format: date-time
-                      example: "2024-01-15T10:30:00.000Z"
-                    updated_at:
-                      type: string
-                      format: date-time
-                      example: "2024-01-15T10:30:00.000Z"
-                    type:
-                      type: string
-                      example: Employee
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: null
+                        example: null
+                      type:
+                        type: string
+                        example: paginated_employees
+                      attributes:
+                        type: object
+                        properties:
+                          page_info:
+                            type: object
+                            properties:
+                              page_records:
+                                type: integer
+                                description: Number of records in current page
+                                example: 5
+                              next_page_token:
+                                type: string
+                                nullable: true
+                                description: Token for next page (null if last page)
+                                example: null
+                              previous_page_token:
+                                type: string
+                                nullable: true
+                                description: Token for previous page (null if first page)
+                                example: null
+                          employees:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  example: "614"
+                                type:
+                                  type: string
+                                  example: employee
+                                attributes:
+                                  type: object
+                                  properties:
+                                    id:
+                                      type: integer
+                                      example: 614
+                                    email_address:
+                                      type: string
+                                      format: email
+                                      example: john@example.com
+                                    first_name:
+                                      type: string
+                                      example: John
+                                    last_name:
+                                      type: string
+                                      example: Doe
+                                    phone_number:
+                                      type: string
+                                      example: "+52 55 1234 5678"
+                                    created_at:
+                                      type: string
+                                      format: date-time
+                                      example: "2025-10-16T04:29:14.355Z"
+                                    updated_at:
+                                      type: string
+                                      format: date-time
+                                      example: "2025-10-16T04:29:14.355Z"
+                                    type:
+                                      type: string
+                                      example: Employee
         "401":
           description: Unauthorized - missing or invalid token
     post:
