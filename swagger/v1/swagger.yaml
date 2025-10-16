@@ -56,6 +56,64 @@ paths:
           description: Session destroyed successfully
         "401":
           description: Invalid or missing token
+  "/v1/auth/registrations":
+    post:
+      summary: Registers a new employee and returns authentication token
+      tags:
+        - Authentication
+      parameters: []
+      responses:
+        "201":
+          description: Employee created successfully
+        "422":
+          description: Validation errors
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email_address:
+                  type: string
+                  format: email
+                  example: john.doe@example.com
+                password:
+                  type: string
+                  format: password
+                  example: password123
+                password_confirmation:
+                  type: string
+                  format: password
+                  example: password123
+                first_name:
+                  type: string
+                  example: John
+                last_name:
+                  type: string
+                  example: Doe
+                date_of_birth:
+                  type: string
+                  format: date
+                  example: "1990-01-15"
+                phone_number:
+                  type: string
+                  example: "5512345678"
+                international_code:
+                  type: string
+                  example: MX
+                  enum:
+                    - MX
+                    - US
+                    - CA
+              required:
+                - email_address
+                - password
+                - password_confirmation
+                - first_name
+                - last_name
+                - date_of_birth
+                - phone_number
+                - international_code
 servers:
   - url: http://{defaultHost}
     variables:
