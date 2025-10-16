@@ -114,6 +114,58 @@ paths:
                 - date_of_birth
                 - phone_number
                 - international_code
+  "/v1/employees":
+    get:
+      summary: Retrieves a list of all employees
+      tags:
+        - Employees
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: Bearer token
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Employees list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    email_address:
+                      type: string
+                      format: email
+                      example: john.doe@example.com
+                    first_name:
+                      type: string
+                      example: John
+                    last_name:
+                      type: string
+                      example: Doe
+                    phone_number:
+                      type: string
+                      example: "+52 55 1234 5678"
+                    created_at:
+                      type: string
+                      format: date-time
+                      example: "2024-01-15T10:30:00.000Z"
+                    updated_at:
+                      type: string
+                      format: date-time
+                      example: "2024-01-15T10:30:00.000Z"
+                    type:
+                      type: string
+                      example: Employee
+        "401":
+          description: Unauthorized - missing or invalid token
 servers:
   - url: http://{defaultHost}
     variables:
