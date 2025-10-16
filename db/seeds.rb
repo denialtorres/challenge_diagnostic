@@ -15,7 +15,8 @@ user1 = Employee.find_or_create_by!(email_address: "john@example.com") do |emplo
   employee.password = "password123"
   employee.first_name = "John"
   employee.last_name = "Doe"
-  employee.phone_number = "555-0101"
+  employee.phone_number = "5512345678"
+  employee.international_code = "MX"
   employee.date_of_birth = Date.new(1990, 1, 15)
 end
 
@@ -23,7 +24,8 @@ user2 = Employee.find_or_create_by!(email_address: "jane@example.com") do |emplo
   employee.password = "password123"
   employee.first_name = "Jane"
   employee.last_name = "Smith"
-  employee.phone_number = "555-0102"
+  employee.phone_number = "2125551234"
+  employee.international_code = "US"
   employee.date_of_birth = Date.new(1988, 6, 20)
 end
 
@@ -31,7 +33,8 @@ user3 = Employee.find_or_create_by!(email_address: "admin@example.com") do |empl
   employee.password = "adminpassword"
   employee.first_name = "Admin"
   employee.last_name = "User"
-  employee.phone_number = "555-0100"
+  employee.phone_number = "6045559999"
+  employee.international_code = "CA"
   employee.date_of_birth = Date.new(1985, 12, 1)
 end
 
