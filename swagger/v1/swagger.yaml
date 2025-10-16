@@ -166,6 +166,115 @@ paths:
                       example: Employee
         "401":
           description: Unauthorized - missing or invalid token
+    post:
+      summary: Creates a new employee
+      tags:
+        - Employees
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: Bearer token
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Employee created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  email_address:
+                    type: string
+                    format: email
+                    example: new.employee@example.com
+                  first_name:
+                    type: string
+                    example: New
+                  last_name:
+                    type: string
+                    example: Employee
+                  phone_number:
+                    type: string
+                    example: "+52 55 8765 4321"
+                  created_at:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T14:30:00.000Z"
+                  updated_at:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T14:30:00.000Z"
+                  type:
+                    type: string
+                    example: Employee
+        "422":
+          description: Validation errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      ["First name can't be blank", "Last name can't be blank"]
+        "401":
+          description: Unauthorized - missing or invalid token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email_address:
+                  type: string
+                  format: email
+                  example: new.employee@example.com
+                password:
+                  type: string
+                  format: password
+                  example: password123
+                password_confirmation:
+                  type: string
+                  format: password
+                  example: password123
+                first_name:
+                  type: string
+                  example: New
+                last_name:
+                  type: string
+                  example: Employee
+                date_of_birth:
+                  type: string
+                  format: date
+                  example: "1992-05-20"
+                phone_number:
+                  type: string
+                  example: "5587654321"
+                international_code:
+                  type: string
+                  example: MX
+                  enum:
+                    - MX
+                    - US
+                    - CA
+              required:
+                - email_address
+                - password
+                - password_confirmation
+                - first_name
+                - last_name
+                - date_of_birth
+                - phone_number
+                - international_code
   "/v1/employees/{id}":
     get:
       summary: Retrieves a specific employee by ID
