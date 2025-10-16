@@ -16,6 +16,7 @@ RSpec.describe 'Employees API', type: :request do
       security [ Bearer: [] ]
 
       parameter name: :Authorization, in: :header, type: :string, required: true, description: "Bearer token"
+      parameter name: :page_token, in: :query, type: :string, required: false, description: "Token for cursor-based pagination"
 
       response "200", "Employees list retrieved successfully" do
         let(:user) { create(:user, email_address: "john1@example.com", password: "password123") }
@@ -103,6 +104,67 @@ RSpec.describe 'Employees API', type: :request do
           employees = json_response["data"]["attributes"]["employees"]
           expect(employees).to be_an(Array)
           expect(employees.length).to eq(0)
+        end
+      end
+
+      response "200", "Paginated employees list with cursor navigation" do
+        let(:user) { create(:user, email_address: "john3@example.com", password: "password123") }
+        let(:session_record) { create(:session, user: user) }
+        let(:token) { session_record.token }
+        let(:Authorization) { "Bearer #{token}" }
+
+        before do
+          # Create 15 employees to test pagination (limit is 10 per page)
+          15.times do |i|
+            create(:employee,
+              email_address: "employee#{i + 1}@example.com",
+              first_name: "Employee",
+              last_name: "#{i + 1}",
+              phone_number: "55123456#{format('%02d', i + 10)}",
+              international_code: "MX"
+            )
+          end
+        end
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+          expect(response.content_type).to match(a_string_including("application/json"))
+
+          json_response = JSON.parse(response.body)
+          expect(json_response).to have_key("data")
+          expect(json_response["data"]["type"]).to eq("paginated_employees")
+
+          # Check pagination info for first page
+          page_info = json_response["data"]["attributes"]["page_info"]
+          expect(page_info["page_records"]).to eq(10) # Should have 10 records (limit)
+          expect(page_info["next_page_token"]).not_to be_nil # Should have next page
+          expect(page_info["previous_page_token"]).to be_nil # First page has no previous
+
+          # Check employees array
+          employees = json_response["data"]["attributes"]["employees"]
+          expect(employees).to be_an(Array)
+          expect(employees.length).to eq(10)
+
+          # Test navigation to second page using page_token
+          next_page_token = page_info["next_page_token"]
+          get "/v1/employees", params: { page_token: next_page_token },
+              headers: { "Authorization" => "Bearer #{token}" }
+
+          expect(response).to have_http_status(:ok)
+          second_page_response = JSON.parse(response.body)
+
+          second_page_info = second_page_response["data"]["attributes"]["page_info"]
+          expect(second_page_info["page_records"]).to eq(5) # Remaining 5 records
+          expect(second_page_info["next_page_token"]).to be_nil # Last page has no next
+          expect(second_page_info["previous_page_token"]).not_to be_nil # Should have previous
+
+          second_page_employees = second_page_response["data"]["attributes"]["employees"]
+          expect(second_page_employees.length).to eq(5)
+
+          # Verify no duplicate employees between pages
+          first_page_ids = employees.map { |emp| emp["id"] }
+          second_page_ids = second_page_employees.map { |emp| emp["id"] }
+          expect(first_page_ids & second_page_ids).to be_empty
         end
       end
 
