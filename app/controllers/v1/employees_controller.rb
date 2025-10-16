@@ -1,7 +1,14 @@
 class V1::EmployeesController < ApplicationController
   def index
     employees = Employee.all
-    render json: EmployeeSerializer.new(employees).serializable_hash
+
+    page = if params[:page_token].present?
+             Rotulus::Page.new(employees, limit: 10).at(params[:page_token])
+           else
+             Rotulus::Page.new(employees, limit: 10)
+           end
+
+    render json: PaginatedEmployeesSerializer.new(page).serializable_hash
   end
 
   def show
@@ -45,6 +52,6 @@ class V1::EmployeesController < ApplicationController
 
   def employee_params
     params.permit(:email_address, :password, :password_confirmation, :first_name, :last_name,
-                  :date_of_birth, :phone_number, :international_code)
+                  :date_of_birth, :phone_number, :international_code, :page_token)
   end
 end
