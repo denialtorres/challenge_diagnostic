@@ -23,7 +23,7 @@ RSpec.describe 'Registrations API', type: :request do
           last_name: { type: :string, example: "Doe" },
           date_of_birth: { type: :string, format: :date, example: "1990-01-15" },
           phone_number: { type: :string, example: "5512345678" },
-          international_code: { type: :string, example: "MX", enum: ["MX", "US", "CA"] }
+          international_code: { type: :string, example: "MX", enum: [ "MX", "US", "CA" ] }
         },
         required: [ "email_address", "password", "password_confirmation", "first_name", "last_name", "date_of_birth", "phone_number", "international_code" ]
       }

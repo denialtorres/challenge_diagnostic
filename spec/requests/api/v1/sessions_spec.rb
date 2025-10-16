@@ -46,7 +46,7 @@ RSpec.describe 'Sessions API', type: :request do
         end
 
         run_test! do
-          expect([401, 403]).to include(response.status)
+          expect([ 401, 403 ]).to include(response.status)
           expect(response.content_type).to match(a_string_including("application/json"))
 
           json_response = JSON.parse(response.body)
@@ -61,7 +61,7 @@ RSpec.describe 'Sessions API', type: :request do
       tags "Authentication"
       consumes "application/json"
       produces "application/json"
-      security [Bearer: []]
+      security [ Bearer: [] ]
 
       parameter name: :Authorization, in: :header, type: :string,
                 description: "Bearer token for authentication",
@@ -86,7 +86,7 @@ RSpec.describe 'Sessions API', type: :request do
         let(:Authorization) { "Bearer invalid_token" }
 
         run_test! do
-          expect([401, 403]).to include(response.status)
+          expect([ 401, 403 ]).to include(response.status)
         end
       end
     end
