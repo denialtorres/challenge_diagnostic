@@ -13,7 +13,7 @@ RSpec.describe 'Employees API', type: :request do
       tags "Employees"
       consumes "application/json"
       produces "application/json"
-      security [Bearer: []]
+      security [ Bearer: [] ]
 
       parameter name: :Authorization, in: :header, type: :string, required: true, description: "Bearer token"
 
@@ -78,7 +78,7 @@ RSpec.describe 'Employees API', type: :request do
         let(:Authorization) { "" }
 
         run_test! do
-          expect([401, 403]).to include(response.status)
+          expect([ 401, 403 ]).to include(response.status)
         end
       end
 
@@ -86,7 +86,7 @@ RSpec.describe 'Employees API', type: :request do
         let(:Authorization) { "Bearer invalid_token_here" }
 
         run_test! do
-          expect([401, 403]).to include(response.status)
+          expect([ 401, 403 ]).to include(response.status)
         end
       end
     end
