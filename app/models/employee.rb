@@ -11,10 +11,10 @@ class Employee < User
   # Phone validation after formatting
   validates_plausible_phone :phone_number,
                             message: "is not a valid phone number",
-                            country_code: ->(employee) { employee.international_code || 'MX' }
+                            country_code: ->(employee) { employee.international_code || "MX" }
 
   validates :international_code, inclusion: {
-    in: YAML.load_file(Rails.root.join('config', 'country_dialing_codes.yml')).keys,
+    in: YAML.load_file(Rails.root.join("config", "country_dialing_codes.yml")).keys,
     message: "is not a supported country"
   }, allow_blank: true
 
@@ -25,7 +25,7 @@ class Employee < User
 
   def email_format
     unless email_address =~ /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i
-      errors.add(:email_address, 'is not a valid email address')
+      errors.add(:email_address, "is not a valid email address")
     end
   end
 
@@ -33,7 +33,7 @@ class Employee < User
     return if phone_number.blank?
 
     # Use international_code if present, otherwise default to MX
-    country = international_code.presence || 'MX'
+    country = international_code.presence || "MX"
 
     formatter = PhoneFormatter.new
     formatted = formatter.format(phone_number, country_code: country)

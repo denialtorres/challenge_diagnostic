@@ -140,25 +140,25 @@ RSpec.describe Employee, type: :model do
 
     describe 'international_code validation' do
       it 'accepts valid country codes' do
-        valid_countries = ['US', 'CA', 'MX', 'AR', 'BR', 'CO']
+        valid_countries = [ 'US', 'CA', 'MX', 'AR', 'BR', 'CO' ]
 
         valid_countries.each do |country|
           # Use appropriate phone number for each country
           phone = case country
-                  when 'US', 'CA' then '2125551234'
-                  when 'MX' then '5512345678'
-                  when 'AR' then '1112345678'
-                  when 'BR' then '11987654321'
-                  when 'CO' then '3001234567'
-                  else '2125551234'
-                  end
+          when 'US', 'CA' then '2125551234'
+          when 'MX' then '5512345678'
+          when 'AR' then '1112345678'
+          when 'BR' then '11987654321'
+          when 'CO' then '3001234567'
+          else '2125551234'
+          end
           employee = build(:employee, phone_number: phone, international_code: country)
           expect(employee).to be_valid, "#{country} should be valid"
         end
       end
 
       it 'rejects invalid country codes' do
-        invalid_countries = ['XX', 'ZZ', '123', 'usa', 'UNITED_STATES']
+        invalid_countries = [ 'XX', 'ZZ', '123', 'usa', 'UNITED_STATES' ]
 
         invalid_countries.each do |country|
           employee = build(:employee, phone_number: "2125551234", international_code: country)

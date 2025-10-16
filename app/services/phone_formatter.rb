@@ -1,12 +1,12 @@
 class PhoneFormatter
-  DEFAULT_COUNTRY = 'MX'.freeze
+  DEFAULT_COUNTRY = "MX".freeze
 
   def format(phone, country_code: nil)
     normalized_phone = if country_code
                          phone&.phony_normalized(country_code: country_code)
-                       else
+    else
                          phone&.phony_normalized(default_country_code: DEFAULT_COUNTRY)
-                       end
-    normalized_phone&.phony_formatted(format: :international, spaces: ' ')
+    end
+    normalized_phone&.phony_formatted(format: :international, spaces: " ")
   end
 end
