@@ -1,0 +1,18 @@
+US:
+  name: United States of America
+  country_code: "1"
+AR:
+  name: Argentina
+  country_code: "54"
+BR:
+  name: Brazil
+  country_code: "55"
+CA:
+  name: Canada
+  country_code: "1"
+CO:
+  name: Colombia
+  country_code: "57"
+MX:
+  name: Mexico
+  country_code: "52"

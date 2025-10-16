@@ -10,6 +10,7 @@ Rails.application.routes.draw do
     namespace :auth do
       post :login, to: "sessions#create"
       delete :logout, to: "sessions#destroy"
+      resources :registrations, only: %i[create]
     end
   end
   # Defines the root path route ("/")
