@@ -42,6 +42,15 @@ gem "phony_rails"
 gem "rswag-api"
 gem "rswag-ui"
 
+# serialize api response
+gem "jsonapi-serializer"
+
+# cursor pagination
+gem "rotulus"
+
+# env variables
+gem "dotenv"
+
 group :development, :test do
   # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
   gem "brakeman", require: false

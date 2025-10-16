@@ -1,18 +1,19 @@
 class V1::EmployeesController < ApplicationController
   def index
     employees = Employee.all
-    render json: employees.as_json(
-      only: [ :id, :email_address, :first_name, :last_name, :phone_number, :created_at, :updated_at ],
-      methods: [ :type ]
-    )
+
+    page = if params[:page_token].present?
+             Rotulus::Page.new(employees, limit: 10).at(params[:page_token])
+    else
+             Rotulus::Page.new(employees, limit: 10)
+    end
+
+    render json: PaginatedEmployeesSerializer.new(page).serializable_hash
   end
 
   def show
     employee = Employee.find(params[:id])
-    render json: employee.as_json(
-      only: [ :id, :email_address, :first_name, :last_name, :phone_number, :created_at, :updated_at ],
-      methods: [ :type ]
-    )
+    render json: EmployeeSerializer.new(employee).serializable_hash
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Employee not found" }, status: :not_found
   end
@@ -21,10 +22,7 @@ class V1::EmployeesController < ApplicationController
     employee = Employee.new(employee_params)
 
     if employee.save
-      render json: employee.as_json(
-        only: [ :id, :email_address, :first_name, :last_name, :phone_number, :created_at, :updated_at ],
-        methods: [ :type ]
-      ), status: :created
+      render json: EmployeeSerializer.new(employee).serializable_hash, status: :created
     else
       render json: { error: employee.errors.full_messages }, status: :unprocessable_entity
     end
@@ -34,10 +32,7 @@ class V1::EmployeesController < ApplicationController
     employee = Employee.find(params[:id])
 
     if employee.update(employee_params)
-      render json: employee.as_json(
-        only: [ :id, :email_address, :first_name, :last_name, :phone_number, :created_at, :updated_at ],
-        methods: [ :type ]
-      ), status: :ok
+      render json: EmployeeSerializer.new(employee).serializable_hash, status: :ok
     else
       render json: { error: employee.errors.full_messages }, status: :unprocessable_entity
     end
@@ -57,6 +52,6 @@ class V1::EmployeesController < ApplicationController
 
   def employee_params
     params.permit(:email_address, :password, :password_confirmation, :first_name, :last_name,
-                  :date_of_birth, :phone_number, :international_code)
+                  :date_of_birth, :phone_number, :international_code, :page_token)
   end
 end

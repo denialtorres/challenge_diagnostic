@@ -2,6 +2,11 @@ require 'rails_helper'
 require 'swagger_helper'
 
 RSpec.describe 'Sessions API', type: :request do
+  before(:each) do
+    User.destroy_all
+    Session.destroy_all
+  end
+
   path "/v1/auth/login" do
     post "Authenticates user and creates session" do
       tags "Authentication"

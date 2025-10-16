@@ -16,6 +16,7 @@ RSpec.describe 'Employees API', type: :request do
       security [ Bearer: [] ]
 
       parameter name: :Authorization, in: :header, type: :string, required: true, description: "Bearer token"
+      parameter name: :page_token, in: :query, type: :string, required: false, description: "Token for cursor-based pagination"
 
       response "200", "Employees list retrieved successfully" do
         let(:user) { create(:user, email_address: "john1@example.com", password: "password123") }
@@ -35,26 +36,46 @@ RSpec.describe 'Employees API', type: :request do
           expect(response.content_type).to match(a_string_including("application/json"))
 
           json_response = JSON.parse(response.body)
-          expect(json_response).to be_an(Array)
-          expect(json_response.length).to eq(3)
+          expect(json_response).to have_key("data")
+          expect(json_response["data"]).to be_a(Hash)
+          expect(json_response["data"]["type"]).to eq("paginated_employees")
+          expect(json_response["data"]["attributes"]).to have_key("employees")
+          expect(json_response["data"]["attributes"]).to have_key("page_info")
+
+          # Check pagination info
+          page_info = json_response["data"]["attributes"]["page_info"]
+          expect(page_info).to have_key("page_records")
+          expect(page_info).to have_key("next_page_token")
+          expect(page_info).to have_key("previous_page_token")
+          expect(page_info["page_records"]).to eq(3)
+
+          # Check employees array
+          employees = json_response["data"]["attributes"]["employees"]
+          expect(employees).to be_an(Array)
+          expect(employees.length).to eq(3)
 
           # Check that each employee has the expected structure
-          json_response.each do |employee|
+          employees.each do |employee|
             expect(employee).to have_key("id")
-            expect(employee).to have_key("email_address")
-            expect(employee).to have_key("first_name")
-            expect(employee).to have_key("last_name")
-            expect(employee).to have_key("phone_number")
-            expect(employee).to have_key("created_at")
-            expect(employee).to have_key("updated_at")
             expect(employee).to have_key("type")
-            expect(employee["type"]).to eq("Employee")
+            expect(employee).to have_key("attributes")
+            expect(employee["type"]).to eq("employee")
+
+            attributes = employee["attributes"]
+            expect(attributes).to have_key("email_address")
+            expect(attributes).to have_key("first_name")
+            expect(attributes).to have_key("last_name")
+            expect(attributes).to have_key("phone_number")
+            expect(attributes).to have_key("created_at")
+            expect(attributes).to have_key("updated_at")
+            expect(attributes).to have_key("type")
+            expect(attributes["type"]).to eq("Employee")
           end
 
           # Verify specific employee data
-          john_employee = json_response.find { |emp| emp["first_name"] == "John" }
-          expect(john_employee["email_address"]).to eq("john.doe@example.com")
-          expect(john_employee["last_name"]).to eq("Doe")
+          john_employee = employees.find { |emp| emp["attributes"]["first_name"] == "John" }
+          expect(john_employee["attributes"]["email_address"]).to eq("john.doe@example.com")
+          expect(john_employee["attributes"]["last_name"]).to eq("Doe")
         end
       end
 
@@ -69,8 +90,81 @@ RSpec.describe 'Employees API', type: :request do
           expect(response.content_type).to match(a_string_including("application/json"))
 
           json_response = JSON.parse(response.body)
-          expect(json_response).to be_an(Array)
-          expect(json_response.length).to eq(0)
+          expect(json_response).to have_key("data")
+          expect(json_response["data"]).to be_a(Hash)
+          expect(json_response["data"]["type"]).to eq("paginated_employees")
+          expect(json_response["data"]["attributes"]).to have_key("employees")
+          expect(json_response["data"]["attributes"]).to have_key("page_info")
+
+          # Check pagination info
+          page_info = json_response["data"]["attributes"]["page_info"]
+          expect(page_info["page_records"]).to eq(0)
+
+          # Check employees array is empty
+          employees = json_response["data"]["attributes"]["employees"]
+          expect(employees).to be_an(Array)
+          expect(employees.length).to eq(0)
+        end
+      end
+
+      response "200", "Paginated employees list with cursor navigation" do
+        let(:user) { create(:user, email_address: "john3@example.com", password: "password123") }
+        let(:session_record) { create(:session, user: user) }
+        let(:token) { session_record.token }
+        let(:Authorization) { "Bearer #{token}" }
+
+        before do
+          # Create 15 employees to test pagination (limit is 10 per page)
+          15.times do |i|
+            create(:employee,
+              email_address: "employee#{i + 1}@example.com",
+              first_name: "Employee",
+              last_name: "#{i + 1}",
+              phone_number: "55123456#{format('%02d', i + 10)}",
+              international_code: "MX"
+            )
+          end
+        end
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+          expect(response.content_type).to match(a_string_including("application/json"))
+
+          json_response = JSON.parse(response.body)
+          expect(json_response).to have_key("data")
+          expect(json_response["data"]["type"]).to eq("paginated_employees")
+
+          # Check pagination info for first page
+          page_info = json_response["data"]["attributes"]["page_info"]
+          expect(page_info["page_records"]).to eq(10) # Should have 10 records (limit)
+          expect(page_info["next_page_token"]).not_to be_nil # Should have next page
+          expect(page_info["previous_page_token"]).to be_nil # First page has no previous
+
+          # Check employees array
+          employees = json_response["data"]["attributes"]["employees"]
+          expect(employees).to be_an(Array)
+          expect(employees.length).to eq(10)
+
+          # Test navigation to second page using page_token
+          next_page_token = page_info["next_page_token"]
+          get "/v1/employees", params: { page_token: next_page_token },
+              headers: { "Authorization" => "Bearer #{token}" }
+
+          expect(response).to have_http_status(:ok)
+          second_page_response = JSON.parse(response.body)
+
+          second_page_info = second_page_response["data"]["attributes"]["page_info"]
+          expect(second_page_info["page_records"]).to eq(5) # Remaining 5 records
+          expect(second_page_info["next_page_token"]).to be_nil # Last page has no next
+          expect(second_page_info["previous_page_token"]).not_to be_nil # Should have previous
+
+          second_page_employees = second_page_response["data"]["attributes"]["employees"]
+          expect(second_page_employees.length).to eq(5)
+
+          # Verify no duplicate employees between pages
+          first_page_ids = employees.map { |emp| emp["id"] }
+          second_page_ids = second_page_employees.map { |emp| emp["id"] }
+          expect(first_page_ids & second_page_ids).to be_empty
         end
       end
 
@@ -136,24 +230,29 @@ RSpec.describe 'Employees API', type: :request do
             expect(response.content_type).to match(a_string_including("application/json"))
 
             json_response = JSON.parse(response.body)
-            expect(json_response).to be_a(Hash)
+            expect(json_response).to have_key("data")
 
-            # Check that the employee has the expected structure
-            expect(json_response).to have_key("id")
-            expect(json_response).to have_key("email_address")
-            expect(json_response).to have_key("first_name")
-            expect(json_response).to have_key("last_name")
-            expect(json_response).to have_key("phone_number")
-            expect(json_response).to have_key("created_at")
-            expect(json_response).to have_key("updated_at")
-            expect(json_response).to have_key("type")
+            employee = json_response["data"]
+            expect(employee).to have_key("id")
+            expect(employee).to have_key("type")
+            expect(employee).to have_key("attributes")
+            expect(employee["type"]).to eq("employee")
+
+            attributes = employee["attributes"]
+            expect(attributes).to have_key("email_address")
+            expect(attributes).to have_key("first_name")
+            expect(attributes).to have_key("last_name")
+            expect(attributes).to have_key("phone_number")
+            expect(attributes).to have_key("created_at")
+            expect(attributes).to have_key("updated_at")
+            expect(attributes).to have_key("type")
 
             # Verify specific employee data
-            expect(json_response["email_address"]).to eq("new.employee@example.com")
-            expect(json_response["first_name"]).to eq("New")
-            expect(json_response["last_name"]).to eq("Employee")
-            expect(json_response["phone_number"]).to eq("+52 55 8765 4321")
-            expect(json_response["type"]).to eq("Employee")
+            expect(attributes["email_address"]).to eq("new.employee@example.com")
+            expect(attributes["first_name"]).to eq("New")
+            expect(attributes["last_name"]).to eq("Employee")
+            expect(attributes["phone_number"]).to eq("+52 55 8765 4321")
+            expect(attributes["type"]).to eq("Employee")
           end
         end
 
@@ -265,24 +364,29 @@ RSpec.describe 'Employees API', type: :request do
           expect(response.content_type).to match(a_string_including("application/json"))
 
           json_response = JSON.parse(response.body)
-          expect(json_response).to be_a(Hash)
+          expect(json_response).to have_key("data")
 
-          # Check that the employee has the expected structure
-          expect(json_response).to have_key("id")
-          expect(json_response).to have_key("email_address")
-          expect(json_response).to have_key("first_name")
-          expect(json_response).to have_key("last_name")
-          expect(json_response).to have_key("phone_number")
-          expect(json_response).to have_key("created_at")
-          expect(json_response).to have_key("updated_at")
-          expect(json_response).to have_key("type")
+          emp_data = json_response["data"]
+          expect(emp_data).to have_key("id")
+          expect(emp_data).to have_key("type")
+          expect(emp_data).to have_key("attributes")
+          expect(emp_data["type"]).to eq("employee")
+
+          attributes = emp_data["attributes"]
+          expect(attributes).to have_key("email_address")
+          expect(attributes).to have_key("first_name")
+          expect(attributes).to have_key("last_name")
+          expect(attributes).to have_key("phone_number")
+          expect(attributes).to have_key("created_at")
+          expect(attributes).to have_key("updated_at")
+          expect(attributes).to have_key("type")
 
           # Verify specific employee data
-          expect(json_response["id"]).to eq(employee.id)
-          expect(json_response["email_address"]).to eq("specific.employee@example.com")
-          expect(json_response["first_name"]).to eq("Specific")
-          expect(json_response["last_name"]).to eq("Employee")
-          expect(json_response["type"]).to eq("Employee")
+          expect(emp_data["id"].to_i).to eq(employee.id)
+          expect(attributes["email_address"]).to eq("specific.employee@example.com")
+          expect(attributes["first_name"]).to eq("Specific")
+          expect(attributes["last_name"]).to eq("Employee")
+          expect(attributes["type"]).to eq("Employee")
         end
       end
 
@@ -363,25 +467,30 @@ RSpec.describe 'Employees API', type: :request do
           expect(response.content_type).to match(a_string_including("application/json"))
 
           json_response = JSON.parse(response.body)
-          expect(json_response).to be_a(Hash)
+          expect(json_response).to have_key("data")
 
-          # Check that the employee has the expected structure
-          expect(json_response).to have_key("id")
-          expect(json_response).to have_key("email_address")
-          expect(json_response).to have_key("first_name")
-          expect(json_response).to have_key("last_name")
-          expect(json_response).to have_key("phone_number")
-          expect(json_response).to have_key("created_at")
-          expect(json_response).to have_key("updated_at")
-          expect(json_response).to have_key("type")
+          emp_data = json_response["data"]
+          expect(emp_data).to have_key("id")
+          expect(emp_data).to have_key("type")
+          expect(emp_data).to have_key("attributes")
+          expect(emp_data["type"]).to eq("employee")
+
+          attributes = emp_data["attributes"]
+          expect(attributes).to have_key("email_address")
+          expect(attributes).to have_key("first_name")
+          expect(attributes).to have_key("last_name")
+          expect(attributes).to have_key("phone_number")
+          expect(attributes).to have_key("created_at")
+          expect(attributes).to have_key("updated_at")
+          expect(attributes).to have_key("type")
 
           # Verify updated employee data
-          expect(json_response["id"]).to eq(employee.id)
-          expect(json_response["email_address"]).to eq("original.employee@example.com") # unchanged
-          expect(json_response["first_name"]).to eq("Updated")
-          expect(json_response["last_name"]).to eq("Employee")
-          expect(json_response["phone_number"]).to eq("+52 55 9988 7766")
-          expect(json_response["type"]).to eq("Employee")
+          expect(emp_data["id"].to_i).to eq(employee.id)
+          expect(attributes["email_address"]).to eq("original.employee@example.com") # unchanged
+          expect(attributes["first_name"]).to eq("Updated")
+          expect(attributes["last_name"]).to eq("Employee")
+          expect(attributes["phone_number"]).to eq("+52 55 9988 7766")
+          expect(attributes["type"]).to eq("Employee")
 
           # Verify employee was actually updated in database
           updated_employee = Employee.find(employee.id)
@@ -402,8 +511,9 @@ RSpec.describe 'Employees API', type: :request do
         run_test! do
           expect(response).to have_http_status(:ok)
           json_response = JSON.parse(response.body)
-          expect(json_response["first_name"]).to eq("OnlyFirstName")
-          expect(json_response["last_name"]).to eq("Name") # unchanged
+          attributes = json_response["data"]["attributes"]
+          expect(attributes["first_name"]).to eq("OnlyFirstName")
+          expect(attributes["last_name"]).to eq("Name") # unchanged
         end
       end
 
