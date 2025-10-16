@@ -36,11 +36,25 @@ RSpec.describe 'Employees API', type: :request do
 
           json_response = JSON.parse(response.body)
           expect(json_response).to have_key("data")
-          expect(json_response["data"]).to be_an(Array)
-          expect(json_response["data"].length).to eq(3)
+          expect(json_response["data"]).to be_a(Hash)
+          expect(json_response["data"]["type"]).to eq("paginated_employees")
+          expect(json_response["data"]["attributes"]).to have_key("employees")
+          expect(json_response["data"]["attributes"]).to have_key("page_info")
+
+          # Check pagination info
+          page_info = json_response["data"]["attributes"]["page_info"]
+          expect(page_info).to have_key("page_records")
+          expect(page_info).to have_key("next_page_token")
+          expect(page_info).to have_key("previous_page_token")
+          expect(page_info["page_records"]).to eq(3)
+
+          # Check employees array
+          employees = json_response["data"]["attributes"]["employees"]
+          expect(employees).to be_an(Array)
+          expect(employees.length).to eq(3)
 
           # Check that each employee has the expected structure
-          json_response["data"].each do |employee|
+          employees.each do |employee|
             expect(employee).to have_key("id")
             expect(employee).to have_key("type")
             expect(employee).to have_key("attributes")
@@ -58,7 +72,7 @@ RSpec.describe 'Employees API', type: :request do
           end
 
           # Verify specific employee data
-          john_employee = json_response["data"].find { |emp| emp["attributes"]["first_name"] == "John" }
+          john_employee = employees.find { |emp| emp["attributes"]["first_name"] == "John" }
           expect(john_employee["attributes"]["email_address"]).to eq("john.doe@example.com")
           expect(john_employee["attributes"]["last_name"]).to eq("Doe")
         end
@@ -76,8 +90,19 @@ RSpec.describe 'Employees API', type: :request do
 
           json_response = JSON.parse(response.body)
           expect(json_response).to have_key("data")
-          expect(json_response["data"]).to be_an(Array)
-          expect(json_response["data"].length).to eq(0)
+          expect(json_response["data"]).to be_a(Hash)
+          expect(json_response["data"]["type"]).to eq("paginated_employees")
+          expect(json_response["data"]["attributes"]).to have_key("employees")
+          expect(json_response["data"]["attributes"]).to have_key("page_info")
+
+          # Check pagination info
+          page_info = json_response["data"]["attributes"]["page_info"]
+          expect(page_info["page_records"]).to eq(0)
+
+          # Check employees array is empty
+          employees = json_response["data"]["attributes"]["employees"]
+          expect(employees).to be_an(Array)
+          expect(employees.length).to eq(0)
         end
       end
 
