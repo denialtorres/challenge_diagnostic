@@ -8,7 +8,7 @@ class V1::Auth::RegistrationsController < ApplicationController
       start_new_session_for(employee)
       render json: {
         token: Current.session.token,
-        employee: employee.as_json.merge('type' => employee.type)
+        employee: employee.as_json.merge("type" => employee.type)
       }, status: :created
     else
       render json: { error: employee.errors.full_messages }, status: :unprocessable_content
