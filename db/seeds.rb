@@ -68,11 +68,11 @@ last_names = [
   "Price", "Alvarez", "Castillo", "Sanders", "Patel", "Myers", "Long", "Ross", "Foster", "Jimenez"
 ]
 
-international_codes = ["MX", "US", "CA"]
+international_codes = [ "MX", "US", "CA" ]
 # Valid 3-digit area codes for each country
-mx_area_codes = ["551", "552", "553", "554", "555", "556", "557", "558", "559", "810", "811", "812", "330", "331", "332"]
-us_area_codes = ["212", "213", "312", "415", "617", "202", "305", "404", "713", "214", "646", "917", "718", "347", "929"]
-ca_area_codes = ["604", "416", "514", "403", "780", "902", "506", "709", "867", "250", "778", "236", "647", "437", "365"]
+mx_area_codes = [ "551", "552", "553", "554", "555", "556", "557", "558", "559", "810", "811", "812", "330", "331", "332" ]
+us_area_codes = [ "212", "213", "312", "415", "617", "202", "305", "404", "713", "214", "646", "917", "718", "347", "929" ]
+ca_area_codes = [ "604", "416", "514", "403", "780", "902", "506", "709", "867", "250", "778", "236", "647", "437", "365" ]
 
 97.times do |i|
   first_name = first_names.sample
@@ -136,7 +136,7 @@ puts "=" * 50
 puts "Total Employees: #{User.count}"
 puts ""
 puts "Main Test Employees:"
-[user1, user2, user3].each do |user|
+[ user1, user2, user3 ].each do |user|
   puts "  📧 #{user.email_address} (ID: #{user.id}) - #{user.type}"
   puts "     Name: #{user.first_name} #{user.last_name}"
   puts "     Phone: #{user.phone_number}"
