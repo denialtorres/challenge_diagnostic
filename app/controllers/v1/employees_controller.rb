@@ -22,8 +22,8 @@ class V1::EmployeesController < ApplicationController
 
     if employee.save
       render json: employee.as_json(
-        only: [:id, :email_address, :first_name, :last_name, :phone_number, :created_at, :updated_at],
-        methods: [:type]
+        only: [ :id, :email_address, :first_name, :last_name, :phone_number, :created_at, :updated_at ],
+        methods: [ :type ]
       ), status: :created
     else
       render json: { error: employee.errors.full_messages }, status: :unprocessable_entity

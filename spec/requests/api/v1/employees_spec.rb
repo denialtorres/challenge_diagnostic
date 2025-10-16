@@ -89,6 +89,155 @@ RSpec.describe 'Employees API', type: :request do
           expect([ 401, 403 ]).to include(response.status)
         end
       end
+
+      post "Creates a new employee" do
+        tags "Employees"
+        consumes "application/json"
+        produces "application/json"
+        security [ Bearer: [] ]
+
+        parameter name: :Authorization, in: :header, type: :string, required: true, description: "Bearer token"
+        parameter name: :employee_params, in: :body, schema: {
+          type: :object,
+          properties: {
+            email_address: { type: :string, format: :email, example: "new.employee@example.com" },
+            password: { type: :string, format: :password, example: "password123" },
+            password_confirmation: { type: :string, format: :password, example: "password123" },
+            first_name: { type: :string, example: "New" },
+            last_name: { type: :string, example: "Employee" },
+            date_of_birth: { type: :string, format: :date, example: "1992-05-20" },
+            phone_number: { type: :string, example: "5587654321" },
+            international_code: { type: :string, example: "MX", enum: [ "MX", "US", "CA" ] }
+          },
+          required: [ "email_address", "password", "password_confirmation", "first_name", "last_name", "date_of_birth", "phone_number", "international_code" ]
+        }
+
+        response "201", "Employee created successfully" do
+          let(:user) { create(:user, email_address: "john5@example.com", password: "password123") }
+          let(:session_record) { create(:session, user: user) }
+          let(:token) { session_record.token }
+          let(:Authorization) { "Bearer #{token}" }
+          let(:email_address) { "new.employee@example.com" }
+          let(:password) { "password123" }
+          let(:password_confirmation) { "password123" }
+          let(:first_name) { "New" }
+          let(:last_name) { "Employee" }
+          let(:date_of_birth) { "1992-05-20" }
+          let(:phone_number) { "5587654321" }
+          let(:international_code) { "MX" }
+          let(:employee_params) { { email_address: email_address, password: password,
+                                    password_confirmation: password_confirmation, first_name: first_name,
+                                    last_name: last_name, date_of_birth: date_of_birth,
+                                    phone_number: phone_number, international_code: international_code
+                                  } }
+
+          run_test! do
+            expect(response).to have_http_status(:created)
+            expect(response.content_type).to match(a_string_including("application/json"))
+
+            json_response = JSON.parse(response.body)
+            expect(json_response).to be_a(Hash)
+
+            # Check that the employee has the expected structure
+            expect(json_response).to have_key("id")
+            expect(json_response).to have_key("email_address")
+            expect(json_response).to have_key("first_name")
+            expect(json_response).to have_key("last_name")
+            expect(json_response).to have_key("phone_number")
+            expect(json_response).to have_key("created_at")
+            expect(json_response).to have_key("updated_at")
+            expect(json_response).to have_key("type")
+
+            # Verify specific employee data
+            expect(json_response["email_address"]).to eq("new.employee@example.com")
+            expect(json_response["first_name"]).to eq("New")
+            expect(json_response["last_name"]).to eq("Employee")
+            expect(json_response["phone_number"]).to eq("+52 55 8765 4321")
+            expect(json_response["type"]).to eq("Employee")
+          end
+        end
+
+        response "422", "Validation error - missing required fields" do
+          let(:user) { create(:user, email_address: "john6@example.com", password: "password123") }
+          let(:session_record) { create(:session, user: user) }
+          let(:token) { session_record.token }
+          let(:Authorization) { "Bearer #{token}" }
+          let(:email_address) { "incomplete@example.com" }
+          let(:password) { "password123" }
+          let(:password_confirmation) { "password123" }
+          let(:employee_params) { { email_address: email_address, password: password,
+                                    password_confirmation: password_confirmation
+                                  } }
+
+          run_test! do
+            expect(response).to have_http_status(:unprocessable_entity)
+            expect(response.content_type).to match(a_string_including("application/json"))
+
+            json_response = JSON.parse(response.body)
+            expect(json_response).to have_key("error")
+            expect(json_response["error"]).to be_an(Array)
+            expect(json_response["error"]).to include("First name can't be blank")
+            expect(json_response["error"]).to include("Last name can't be blank")
+          end
+        end
+
+        response "422", "Validation error - duplicate email address" do
+          let(:user) { create(:user, email_address: "john7@example.com", password: "password123") }
+          let(:session_record) { create(:session, user: user) }
+          let(:token) { session_record.token }
+          let(:Authorization) { "Bearer #{token}" }
+          let(:email_address) { "duplicate.create@example.com" }
+          let(:password) { "password123" }
+          let(:password_confirmation) { "password123" }
+          let(:first_name) { "Duplicate" }
+          let(:last_name) { "Employee" }
+          let(:date_of_birth) { "1990-01-01" }
+          let(:phone_number) { "5512345678" }
+          let(:international_code) { "MX" }
+          let(:employee_params) { { email_address: email_address, password: password,
+                                    password_confirmation: password_confirmation, first_name: first_name,
+                                    last_name: last_name, date_of_birth: date_of_birth,
+                                    phone_number: phone_number, international_code: international_code
+                                  } }
+
+          before do
+            create(:employee, email_address: "duplicate.create@example.com")
+          end
+
+          run_test! do
+            expect(response).to have_http_status(:unprocessable_entity)
+            json_response = JSON.parse(response.body)
+            expect(json_response).to have_key("error")
+            expect(json_response["error"]).to include("Email address has already been taken")
+          end
+        end
+
+        response "401", "Unauthorized - missing token" do
+          let(:Authorization) { "" }
+          let(:employee_params) { { email_address: "test@example.com", password: "password123",
+                                    password_confirmation: "password123", first_name: "Test",
+                                    last_name: "User", date_of_birth: "1990-01-01",
+                                    phone_number: "5512345678", international_code: "MX"
+                                  } }
+
+          run_test! do
+            expect([ 401, 403 ]).to include(response.status)
+          end
+        end
+
+        response "401", "Unauthorized - invalid token" do
+          let(:Authorization) { "Bearer invalid_token_here" }
+          let(:employee_params) { { email_address: "test@example.com", password: "password123",
+                                    password_confirmation: "password123", first_name: "Test",
+                                    last_name: "User", date_of_birth: "1990-01-01",
+                                    phone_number: "5512345678", international_code: "MX"
+                                  } }
+
+          run_test! do
+            expect([ 401, 403 ]).to include(response.status)
+          end
+        end
+      end
     end
   end
 
