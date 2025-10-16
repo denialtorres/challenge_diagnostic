@@ -91,4 +91,88 @@ RSpec.describe 'Employees API', type: :request do
       end
     end
   end
+
+  path "/v1/employees/{id}" do
+    parameter name: :id, in: :path, type: :integer, description: "Employee ID", example: 1
+
+    get "Retrieves a specific employee by ID" do
+      tags "Employees"
+      consumes "application/json"
+      produces "application/json"
+      security [ Bearer: [] ]
+
+      parameter name: :Authorization, in: :header, type: :string, required: true, description: "Bearer token"
+
+      response "200", "Employee retrieved successfully" do
+        let(:user) { create(:user, email_address: "john3@example.com", password: "password123") }
+        let(:session_record) { create(:session, user: user) }
+        let(:token) { session_record.token }
+        let(:Authorization) { "Bearer #{token}" }
+        let(:employee) { create(:employee, email_address: "specific.employee@example.com", first_name: "Specific", last_name: "Employee") }
+        let(:id) { employee.id }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+          expect(response.content_type).to match(a_string_including("application/json"))
+
+          json_response = JSON.parse(response.body)
+          expect(json_response).to be_a(Hash)
+
+          # Check that the employee has the expected structure
+          expect(json_response).to have_key("id")
+          expect(json_response).to have_key("email_address")
+          expect(json_response).to have_key("first_name")
+          expect(json_response).to have_key("last_name")
+          expect(json_response).to have_key("phone_number")
+          expect(json_response).to have_key("created_at")
+          expect(json_response).to have_key("updated_at")
+          expect(json_response).to have_key("type")
+
+          # Verify specific employee data
+          expect(json_response["id"]).to eq(employee.id)
+          expect(json_response["email_address"]).to eq("specific.employee@example.com")
+          expect(json_response["first_name"]).to eq("Specific")
+          expect(json_response["last_name"]).to eq("Employee")
+          expect(json_response["type"]).to eq("Employee")
+        end
+      end
+
+      response "404", "Employee not found" do
+        let(:user) { create(:user, email_address: "john4@example.com", password: "password123") }
+        let(:session_record) { create(:session, user: user) }
+        let(:token) { session_record.token }
+        let(:Authorization) { "Bearer #{token}" }
+        let(:id) { 99999 }
+
+        run_test! do
+          expect(response).to have_http_status(:not_found)
+          expect(response.content_type).to match(a_string_including("application/json"))
+
+          json_response = JSON.parse(response.body)
+          expect(json_response).to have_key("error")
+          expect(json_response["error"]).to eq("Employee not found")
+        end
+      end
+
+      response "401", "Unauthorized - missing token" do
+        let(:employee) { create(:employee) }
+        let(:id) { employee.id }
+        let(:Authorization) { "" }
+
+        run_test! do
+          expect([ 401, 403 ]).to include(response.status)
+        end
+      end
+
+      response "401", "Unauthorized - invalid token" do
+        let(:employee) { create(:employee) }
+        let(:id) { employee.id }
+        let(:Authorization) { "Bearer invalid_token_here" }
+
+        run_test! do
+          expect([ 401, 403 ]).to include(response.status)
+        end
+      end
+    end
+  end
 end

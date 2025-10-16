@@ -166,6 +166,73 @@ paths:
                       example: Employee
         "401":
           description: Unauthorized - missing or invalid token
+  "/v1/employees/{id}":
+    get:
+      summary: Retrieves a specific employee by ID
+      tags:
+        - Employees
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Employee ID
+          schema:
+            type: integer
+            example: 1
+        - name: Authorization
+          in: header
+          description: Bearer token
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Employee retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  email_address:
+                    type: string
+                    format: email
+                    example: john.doe@example.com
+                  first_name:
+                    type: string
+                    example: John
+                  last_name:
+                    type: string
+                    example: Doe
+                  phone_number:
+                    type: string
+                    example: "+52 55 1234 5678"
+                  created_at:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:00.000Z"
+                  updated_at:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:00.000Z"
+                  type:
+                    type: string
+                    example: Employee
+        "404":
+          description: Employee not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Employee not found
+        "401":
+          description: Unauthorized - missing or invalid token
 servers:
   - url: http://{defaultHost}
     variables:
