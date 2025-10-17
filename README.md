@@ -62,21 +62,21 @@ docker-compose exec app rails c
 
 ## Technical Decision
 
-### JSON API Serializer Gem Choice
+- JSON API Serializer Gem Choice
 
 I chose to use the `jsonapi-serializer` gem for this project to implement a clean and standardized API response format following the JSON:API specification. This decision was driven by several key benefits:
 
 **Presenter Pattern Implementation**: The gem naturally implements the presenter pattern, which separates the presentation logic from the business logic. Instead of cluttering models or controllers with serialization concerns, we can create dedicated serializer classes that handle how data is presented to the API consumers.
 
 
-### Rotulus Gem and Cursor Pagination
+- Rotulus Gem and Cursor Pagination
 
 I chose to implement cursor pagination using the `rotulus` gem instead of traditional offset-based pagination mostly for:
 
 **Mobile-First Approach**: Cursor pagination is ideal for mobile applications that implement infinite scroll functionality. Unlike offset pagination, cursor pagination maintains consistency even when new records are added to the dataset, preventing duplicate or skipped items during scrolling.
 
 
-### Swagger for API Documentation
+- Swagger for API Documentation
 
 I chose to implement Swagger (OpenAPI) for API documentation to provide a comprehensive and interactive documentation experience:
 
@@ -84,7 +84,7 @@ I chose to implement Swagger (OpenAPI) for API documentation to provide a compre
 
 **Self-Documenting API**: I can use the "rswag-specs" gem to generate the documentation based on my rspecs
 
-### Phony Gem for Phone Number Validation
+- Phony Gem for Phone Number Validation
 
 I chose to use the `phony` gem for phone number validation and formatting to ensure consistent and reliable phone number handling:
 
