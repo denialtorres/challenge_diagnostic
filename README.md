@@ -83,3 +83,13 @@ I chose to implement Swagger (OpenAPI) for API documentation to provide a compre
 **Interactive Testing Interface**: Swagger provides a user-friendly web interface that allows developers to test API endpoints directly within the documentation. This eliminates the need for external tools like Postman or curl commands, making it easy to explore and validate API functionality without leaving the browser.
 
 **Self-Documenting API**: I can use the "rswag-specs" gem to generate the documentation based on my rspecs
+
+### Phony Gem for Phone Number Validation
+
+I chose to use the `phony` gem for phone number validation and formatting to ensure consistent and reliable phone number handling:
+
+**Area Code Validation**: The Phony gem provides robust validation based on area codes and country-specific phone number formats.
+
+**Automatic Formatting**: After validation, the gem automatically formats phone numbers into a standardized format for storage.
+
+**International Support**: The gem handles international phone number formats and validation rules,
