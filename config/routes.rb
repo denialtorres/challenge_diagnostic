@@ -16,5 +16,5 @@ Rails.application.routes.draw do
     resources :employees, only: %i[index show create update destroy]
   end
   # Defines the root path route ("/")
-  root to: redirect('/api-docs')
+  root to: redirect("/api-docs")
 end
