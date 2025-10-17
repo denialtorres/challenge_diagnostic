@@ -102,5 +102,8 @@ jobs:
       - name: Copy Rails Master Key
         run: echo $RAILS_MASTER_KEY > config/master.key
 
+      - name: Install kamal
+        run: gem install kamal
+
       - name: Deploy application
         run: kamal deploy
