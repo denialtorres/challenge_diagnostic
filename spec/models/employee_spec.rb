@@ -243,4 +243,20 @@ RSpec.describe Employee, type: :model do
       expect(authenticated_user).to be_nil
     end
   end
+
+  describe 'callbacks' do
+    describe 'after_create' do
+      it 'sets registration_complete when employee is created' do
+        employee = create(:employee)
+        expect(employee.registration_complete).to be_present
+      end
+
+      it 'sets registration_complete even if not explicitly provided' do
+        employee = build(:employee, registration_complete: nil)
+        employee.save!
+
+        expect(employee.registration_complete).to be_present
+      end
+    end
+  end
 end

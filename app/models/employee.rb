@@ -21,6 +21,9 @@ class Employee < User
   # Format phone before validation
   before_validation :format_phone_number
 
+  # Set registration_complete after creation
+  after_create :set_registration_complete
+
   private
 
   def email_format
@@ -40,5 +43,9 @@ class Employee < User
 
     # Only update if formatting was successful
     self.phone_number = formatted if formatted
+  end
+
+  def set_registration_complete
+    update_column(:registration_complete, Time.current)
   end
 end
