@@ -1,4 +1,6 @@
 # Documentation
+## How to Use the app
+Go to demoapp-daniel.fun
 
 ## How to mount the project
 ### Docker
