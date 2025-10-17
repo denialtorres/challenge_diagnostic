@@ -1,28 +1,42 @@
-## Docker
+# Documentation
 
-To mount the project
+## How to mount the project
+### Docker
+To mount the project inside the main folder:
+run
 
-inside the main foler:
-
-```
+```shell
 docker-compose up --build
 ```
 
-run the server
+For run the migrations
+```shell
+ docker-compose exec app rails db:migrate
 ```
-docker-compose exec app /bin/bash
-rails server -b 0.0.0.0
+Run the seed files
+
+```shell
+docker-compose exec app rails db:seed
 ```
 
-run the tests
+to run the server
+```shell
+docker-compose exec app rails server -b 0.0.0.0
 ```
+
+to run the tests
+```shell
 docker-compose exec app /bin/bash
 rails db:environment:set RAILS_ENV=test
 RAILS_ENV=test bundle exec rspec
 ```
 
-
-# Documentation
+access to the shell
+```shell
+docker-compose exec app /bin/bash
 ```
-http://localhost:3000/api-docs/
+
+to access to the rails console
+```shell
+docker-compose exec app rails c
 ```
